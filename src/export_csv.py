@@ -8,17 +8,9 @@ Default behavior:
 - Incremental fetch: if out/activities.csv exists, fetch only activities after the
   latest (date_local + start_time_local) in the file.
 - Full rewrite: merge by id, then rewrite the whole CSV deterministically.
-
-Design goals:
-- Deterministic ordering (newest -> oldest)
-- Clean activity type strings (Run, Walk, Hike, ...)
-- Consistent numeric precision
-- Minimal timestamps (date + HH:MM)
-- Dual pace representations for runs:
-    - pace_mmss (human-readable)
-    - pace_min_per_mi (numeric, plot-friendly)
 """
 
+import argparse
 import csv
 import os
 from datetime import datetime
@@ -140,16 +132,33 @@ def activity_to_row(a) -> Dict[str, Any]:
     }
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Export Strava activities to a deterministic CSV.")
+    parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Fetch all activities and rebuild CSV from scratch",
+    )
+    return parser.parse_args()
+
+
 def main() -> None:
+    args = parse_args()
     os.makedirs(OUT_DIR, exist_ok=True)
 
-    existing_rows, latest_dt = load_existing_rows(OUT_PATH)
+    if args.full:
+        existing_rows = []
+        latest_dt = None
+    else:
+        existing_rows, latest_dt = load_existing_rows(OUT_PATH)
 
     client = get_client()
 
-    # Fetch only new activities when we have an existing file; otherwise fetch all.
+    # Full rebuild fetches all activities; default mode fetches only new ones
     activities_iter = (
-        client.get_activities(after=latest_dt) if latest_dt else client.get_activities()
+        client.get_activities()
+        if args.full or not latest_dt
+        else client.get_activities(after=latest_dt)
     )
 
     new_rows: List[Dict[str, Any]] = [activity_to_row(a) for a in activities_iter]
@@ -178,12 +187,12 @@ def main() -> None:
         writer.writeheader()
         writer.writerows(rows)
 
-    if latest_dt:
-        print(
-            f"Incremental update: fetched {len(new_rows)} new activities since {latest_dt.isoformat()}"
-        )
+    if args.full:
+        print("Full export: fetching all activities")
+    elif latest_dt:
+        print(f"Incremental export: fetching activities after {latest_dt.isoformat()}")
     else:
-        print(f"Initial export: fetched {len(new_rows)} activities")
+        print("Initial export: fetching all activities")
 
     print(f"Wrote {len(rows)} total activities to {OUT_PATH}")
 
