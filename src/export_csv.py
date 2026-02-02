@@ -26,7 +26,10 @@ OUT_PATH = os.path.join(OUT_DIR, "activities.csv")
 
 DISTANCE_MI_DECIMALS = 2
 MOVING_MIN_DECIMALS = 2
-PACE_DECIMALS = 4
+PACE_DECIMALS = 2
+SPEED_MPH_DECIMALS = 2
+ELAPSED_MIN_DECIMALS = 2
+ELEV_FT_DECIMALS = 0
 
 
 FIELDNAMES = [
@@ -36,6 +39,9 @@ FIELDNAMES = [
     "type",
     "distance_mi",
     "moving_time_min",
+    "elapsed_time_min",
+    "total_elev_gain_ft",
+    "avg_speed_mph",
     "pace_mmss",
     "pace_min_per_mi",
     "name",
@@ -68,14 +74,27 @@ def pace_seconds_per_mile(distance_mi: float, moving_time_sec: float) -> Optiona
     return moving_time_sec / distance_mi
 
 
+def mph(speed_mps) -> float:
+    if not speed_mps:
+        return 0.0
+    # speed_mps is usually a pint Quantity; unit_helper.miles_per_hour handles it
+    return float(unit_helper.miles_per_hour(speed_mps).magnitude)
+
+
+def feet(elevation) -> float:
+    if not elevation:
+        return 0.0
+    return float(unit_helper.feet(elevation).magnitude)
+
+
 def is_run_type(type_str: str) -> bool:
     return type_str in {"Run", "TrailRun", "VirtualRun"}
 
 
-def hhmm_local(dt: Optional[datetime]) -> str:
+def hhmmss_local(dt: Optional[datetime]) -> str:
     if not dt:
         return ""
-    return dt.strftime("%H:%M")
+    return dt.strftime("%H:%M:%S")
 
 
 def parse_row_datetime(row: Dict[str, str]) -> Optional[datetime]:
@@ -110,8 +129,12 @@ def activity_to_row(a) -> Dict[str, Any]:
     type_str = clean_activity_type(a.type)
 
     distance_mi = miles(a.distance)
+    elev_ft = feet(getattr(a, "total_elevation_gain", None))
     moving_time_sec = float(a.moving_time) if a.moving_time else 0.0
     moving_time_min = moving_time_sec / 60.0 if moving_time_sec else 0.0
+    elapsed_time_sec = float(a.elapsed_time) if a.elapsed_time else 0.0
+    elapsed_time_min = elapsed_time_sec / 60.0 if elapsed_time_sec else 0.0
+    avg_speed_mph = round(mph(getattr(a, "average_speed", None)), SPEED_MPH_DECIMALS)
 
     pace_sec_mi = (
         pace_seconds_per_mile(distance_mi, moving_time_sec) if is_run_type(type_str) else None
@@ -120,12 +143,15 @@ def activity_to_row(a) -> Dict[str, Any]:
     start_local = getattr(a, "start_date_local", None)
 
     return {
-        "id": str(a.id),  # normalize to string for CSV + merging
+        "id": str(a.id),
         "date_local": start_local.date().isoformat() if start_local else "",
-        "start_time_local": hhmm_local(start_local),
+        "start_time_local": hhmmss_local(start_local),
         "type": type_str,
         "distance_mi": round(distance_mi, DISTANCE_MI_DECIMALS),
         "moving_time_min": round(moving_time_min, MOVING_MIN_DECIMALS),
+        "elapsed_time_min": round(elapsed_time_min, ELAPSED_MIN_DECIMALS),
+        "total_elev_gain_ft": round(elev_ft, ELEV_FT_DECIMALS) if elev_ft > 0 else "",
+        "avg_speed_mph": avg_speed_mph if avg_speed_mph > 0 else "",
         "pace_mmss": seconds_to_mmss(pace_sec_mi),
         "pace_min_per_mi": round((pace_sec_mi / 60.0), PACE_DECIMALS) if pace_sec_mi else "",
         "name": a.name or "",
