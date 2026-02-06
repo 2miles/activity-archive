@@ -21,6 +21,7 @@ OUT_PATH = os.path.join("out", "runs_log.txt")
 
 DELIM = " -- "
 SEP = "-" * 46
+BIG_SEP = "=" * 46
 
 
 def pad_left(s: str, width: int) -> str:
@@ -104,7 +105,7 @@ def load_runs_by_month(csv_path: str) -> dict[tuple[int, int], list[RunRow]]:
 
 def render_month_block(year: int, month: int, runs: list[RunRow]) -> list[str]:
     month_name = date(year, month, 1).strftime("%B %Y")
-    lines: list[str] = [month_name, SEP]
+    lines: list[str] = [BIG_SEP, month_name, SEP]
 
     month_runs = sorted(runs, key=lambda rr: rr.date_str, reverse=True)
 
