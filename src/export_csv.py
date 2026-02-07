@@ -21,7 +21,7 @@ from stravalib import unit_helper
 from client import get_client
 
 
-OUT_DIR = "out"
+OUT_DIR = "derived"
 OUT_PATH = os.path.join(OUT_DIR, "activities.csv")
 
 DISTANCE_MI_DECIMALS = 2

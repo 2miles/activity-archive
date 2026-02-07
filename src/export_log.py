@@ -14,8 +14,8 @@ import os
 from datetime import date
 
 
-CSV_PATH = os.path.join("out", "activities.csv")
-OUT_PATH = os.path.join("out", "activity_log.txt")
+CSV_PATH = os.path.join("derived", "activities.csv")
+OUT_PATH = os.path.join("reports", "activity_log.txt")
 
 DELIM = " -- "
 

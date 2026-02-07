@@ -208,5 +208,8 @@ __marimo__/
 
 
 token.json
-out/
+
 archive/
+derived/
+reports/
+out/

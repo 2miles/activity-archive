@@ -16,8 +16,8 @@ from dataclasses import dataclass
 from datetime import date
 
 
-CSV_PATH = os.path.join("out", "activities.csv")
-OUT_PATH = os.path.join("out", "runs_log.txt")
+CSV_PATH = os.path.join("derived", "activities.csv")
+OUT_PATH = os.path.join("reports", "runs_log.txt")
 
 DELIM = " -- "
 SEP = "-" * 46
