@@ -214,3 +214,5 @@ archive_old/
 derived/
 reports/
 out/
+
+.DS_Store
