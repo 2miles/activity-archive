@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from activity_archive.archive import count_json_files, iter_activity_dicts
-from activity_archive.activity import activity_type, parse_isoish_datetime, is_run
+from activity_archive.activity import activity_type, parse_iso_datetime, is_run
 from activity_archive.units import (
     meters_to_feet,
     meters_to_miles,
@@ -91,7 +91,7 @@ def activity_to_row(a: dict[str, Any]) -> Dict[str, Any]:
 
     typ = activity_type(a)
 
-    start_local = parse_isoish_datetime(a.get("start_date_local"))
+    start_local = parse_iso_datetime(a.get("start_date_local"))
     date_local = start_local.date().isoformat() if start_local else ""
     time_local = hhmmss(start_local)
 

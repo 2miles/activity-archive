@@ -19,13 +19,12 @@ Design:
 
 from __future__ import annotations
 
-import json
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
-from activity_archive.activity import is_run, parse_isoish_datetime
+from activity_archive.activity import is_run, parse_iso_datetime
 from activity_archive.archive import iter_activity_dicts
 from activity_archive.units import (
     meters_to_miles,
@@ -67,7 +66,7 @@ def load_runs_by_month(activities_dir: Path) -> dict[tuple[int, int], list[RunRo
         if not is_run(activity):
             continue
 
-        dt_local = parse_isoish_datetime(activity.get("start_date_local")) or parse_isoish_datetime(
+        dt_local = parse_iso_datetime(activity.get("start_date_local")) or parse_iso_datetime(
             activity.get("start_date")
         )
         if dt_local is None:
