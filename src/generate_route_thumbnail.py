@@ -22,13 +22,14 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-import re
+
+# import re
 from typing import Any
 
 import polyline
 from PIL import Image, ImageDraw
 
-import ast
+# import ast
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ACTIVITIES_DIR = PROJECT_ROOT / "archive" / "activities"
@@ -43,31 +44,43 @@ def load_json(path: Path) -> dict[str, Any]:
     return data
 
 
-def extract_repr_field(text: str, field_name: str) -> str | None:
-    match = re.search(rf"{field_name}=('(?:[^'\\\\]|\\\\.)*')", text)
-    if not match:
-        return None
-    return ast.literal_eval(match.group(1))
+# def extract_repr_field(text: str, field_name: str) -> str | None:
+#     match = re.search(rf"{field_name}=('(?:[^'\\\\]|\\\\.)*')", text)
+#     if not match:
+#         return None
+#     return ast.literal_eval(match.group(1))
+
+
+# def get_encoded_polyline(activity: dict[str, Any]) -> str:
+#     map_obj = activity.get("map")
+
+#     if isinstance(map_obj, dict):
+#         encoded = map_obj.get("summary_polyline") or map_obj.get("polyline")
+#         if isinstance(encoded, str) and encoded.strip():
+#             return encoded
+
+#     if isinstance(map_obj, str):
+#         encoded = extract_repr_field(map_obj, "summary_polyline")
+#         if encoded:
+#             return encoded
+
+#         encoded = extract_repr_field(map_obj, "polyline")
+#         if encoded:
+#             return encoded
+
+#     raise ValueError("Activity JSON is missing a usable polyline in 'map'")
 
 
 def get_encoded_polyline(activity: dict[str, Any]) -> str:
     map_obj = activity.get("map")
+    if not isinstance(map_obj, dict):
+        raise ValueError("Activity JSON is missing a valid 'map' object")
 
-    if isinstance(map_obj, dict):
-        encoded = map_obj.get("summary_polyline") or map_obj.get("polyline")
-        if isinstance(encoded, str) and encoded.strip():
-            return encoded
+    encoded = map_obj.get("summary_polyline") or map_obj.get("polyline")
+    if not isinstance(encoded, str) or not encoded.strip():
+        raise ValueError("Activity JSON is missing a usable polyline in 'map'")
 
-    if isinstance(map_obj, str):
-        encoded = extract_repr_field(map_obj, "summary_polyline")
-        if encoded:
-            return encoded
-
-        encoded = extract_repr_field(map_obj, "polyline")
-        if encoded:
-            return encoded
-
-    raise ValueError("Activity JSON is missing a usable polyline in 'map'")
+    return encoded
 
 
 def decode_points(encoded: str) -> list[tuple[float, float]]:
@@ -137,7 +150,6 @@ def stroke_width_for_size(size: int) -> int:
     """
     Simple heuristic for a clean thumbnail stroke.
     """
-    # return max(2, round(size * 0.012))
     return max(3, round(size * 0.015))
 
 
