@@ -34,7 +34,7 @@ from activity_archive.units import (
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 ACTIVITIES_DIR = PROJECT_ROOT / "archive" / "activities"
-OUT_PATH = PROJECT_ROOT / "reports" / "activity_log.txt"
+OUT_PATH = PROJECT_ROOT / "derived" / "reports" / "activity_log.txt"
 
 DELIM = " -- "
 
