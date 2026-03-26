@@ -35,10 +35,7 @@ from typing import Any, Optional
 
 from client import get_client
 
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-OUT_DIR = PROJECT_ROOT / "archive" / "activities_v2"
-INDEX_PATH = PROJECT_ROOT / "archive" / "index" / "activity_index.json"
+from activity_archive.paths import ACTIVITIES_DIR, ACTIVITY_INDEX_PATH
 
 
 def parse_iso(dt_str: str) -> Optional[datetime]:
@@ -49,7 +46,9 @@ def parse_iso(dt_str: str) -> Optional[datetime]:
         return None
 
 
-def get_archive_bounds(dir_path: Path = OUT_DIR) -> tuple[Optional[datetime], Optional[datetime]]:
+def get_archive_bounds(
+    dir_path: Path = ACTIVITIES_DIR,
+) -> tuple[Optional[datetime], Optional[datetime]]:
     """
     Return (oldest_start_date_utc, newest_start_date_utc) from archived JSON.
     Uses the 'start_date' (UTC) field written in the archive.
@@ -125,7 +124,7 @@ def load_json(path: Path) -> Optional[dict[str, Any]]:
 
 def load_activity_index() -> list[dict]:
     try:
-        with open(INDEX_PATH, "r", encoding="utf-8") as f:
+        with open(ACTIVITY_INDEX_PATH, "r", encoding="utf-8") as f:
             data = json.load(f)
         return data if isinstance(data, list) else []
     except Exception:
@@ -170,7 +169,7 @@ def get_refresh_candidates() -> list[Path]:
     """
     candidates: list[Path] = []
 
-    for path in sorted(OUT_DIR.glob("*.json"), key=lambda p: p.name):
+    for path in sorted(ACTIVITIES_DIR.glob("*.json"), key=lambda p: p.name):
         data = load_json(path)
         if data is None:
             continue
@@ -188,7 +187,7 @@ def reset_all_refresh_flags() -> int:
     """Set recently_refreshed = false for all archived v2 JSON files."""
     n_reset = 0
 
-    for path in sorted(OUT_DIR.glob("*.json"), key=lambda p: p.name):
+    for path in sorted(ACTIVITIES_DIR.glob("*.json"), key=lambda p: p.name):
         data = load_json(path)
         if data is None:
             continue
@@ -202,8 +201,8 @@ def reset_all_refresh_flags() -> int:
 def run_backfill_mode(client: Any, limit: Optional[int], sleep_seconds: float) -> None:
     print("Mode: backfill-from-index")
 
-    if not INDEX_PATH.exists():
-        print(f"Missing activity index: {INDEX_PATH}")
+    if not ACTIVITY_INDEX_PATH.exists():
+        print(f"Missing activity index: {ACTIVITY_INDEX_PATH}")
         return
 
     items = load_activity_index()
@@ -213,7 +212,7 @@ def run_backfill_mode(client: Any, limit: Optional[int], sleep_seconds: float) -
 
     items.sort(key=lambda x: x.get("start_date") or "")
 
-    existing_ids = {path.stem for path in OUT_DIR.glob("*.json")}
+    existing_ids = {path.stem for path in ACTIVITIES_DIR.glob("*.json")}
 
     print(f"Index size: {len(items)}")
     print(f"Already in v2: {len(existing_ids)}")
@@ -227,10 +226,6 @@ def run_backfill_mode(client: Any, limit: Optional[int], sleep_seconds: float) -
         for item in items:
             if limit is not None and n_written >= limit:
                 break
-
-            # activity_id = str(item.get("id"))
-            # if not activity_id:
-            #     continue
 
             raw_id = item.get("id")
             if raw_id is None:
@@ -247,7 +242,7 @@ def run_backfill_mode(client: Any, limit: Optional[int], sleep_seconds: float) -
                 detailed = client.get_activity(int(activity_id))
                 data = activity_to_dict(detailed)
 
-                out_path = OUT_DIR / f"{activity_id}.json"
+                out_path = ACTIVITIES_DIR / f"{activity_id}.json"
                 atomic_write_json(out_path, data)
 
                 existing_ids.add(activity_id)
@@ -273,7 +268,7 @@ def run_backfill_mode(client: Any, limit: Optional[int], sleep_seconds: float) -
 def run_refresh_mode(client: Any, limit: Optional[int], sleep_seconds: float) -> None:
     candidates = get_refresh_candidates()
     remaining_before = len(candidates)
-    total_archived = len(list(OUT_DIR.glob("*.json")))
+    total_archived = len(list(ACTIVITIES_DIR.glob("*.json")))
 
     print("Mode: refresh")
     print(f"Archive size: {total_archived}")
@@ -351,7 +346,7 @@ def run_sync_mode(client: Any, limit: Optional[int], sleep_seconds: float) -> No
     Once the archive has data, it only lists activities after the newest
     archived start_date in v2.
     """
-    _, newest = get_archive_bounds(OUT_DIR)
+    _, newest = get_archive_bounds(ACTIVITIES_DIR)
 
     list_kwargs: dict[str, Any] = {}
 
@@ -376,7 +371,7 @@ def run_sync_mode(client: Any, limit: Optional[int], sleep_seconds: float) -> No
 
             n_listed += 1
             activity_id = act.id
-            out_path = OUT_DIR / f"{activity_id}.json"
+            out_path = ACTIVITIES_DIR / f"{activity_id}.json"
 
             if first:
                 print("First listed activity id:", activity_id)
@@ -401,7 +396,7 @@ def run_sync_mode(client: Any, limit: Optional[int], sleep_seconds: float) -> No
         print("\nInterrupted (Ctrl-C). Already-written files are safe.")
 
     print(f"Done sync. Listed {n_listed} | wrote {n_written}")
-    print(f"Output: {OUT_DIR}")
+    print(f"Output: {ACTIVITIES_DIR}")
 
 
 def main() -> None:
@@ -438,7 +433,7 @@ def main() -> None:
         raise SystemExit("Choose only one of --refresh or --backfill")
 
     client = get_client()
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    ACTIVITIES_DIR.mkdir(parents=True, exist_ok=True)
 
     if args.refresh:
         run_refresh_mode(client, args.limit, args.sleep)

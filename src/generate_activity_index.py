@@ -1,9 +1,7 @@
-from pathlib import Path
 import json
 from datetime import datetime
 
-OLD_DIR = Path("archive/activities")
-OUT_PATH = Path("archive/index/activity_index.json")
+from activity_archive.paths import ACTIVITIES_DIR, ACTIVITY_INDEX_PATH
 
 
 def parse_iso(dt_str):
@@ -16,7 +14,7 @@ def parse_iso(dt_str):
 def main():
     items = []
 
-    for path in OLD_DIR.glob("*.json"):
+    for path in ACTIVITIES_DIR.glob("*.json"):
         try:
             data = json.loads(path.read_text())
         except Exception:
@@ -31,14 +29,14 @@ def main():
             items.append({"id": activity_id, "start_date": None})
 
     # sort oldest → newest
-    items.sort(key=lambda x: x["start_date"] or "")
+    items.sort(key=lambda x: parse_iso(x["start_date"]) or datetime.min)
 
-    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+    ACTIVITY_INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(OUT_PATH, "w") as f:
+    with open(ACTIVITY_INDEX_PATH, "w") as f:
         json.dump(items, f, indent=2)
 
-    print(f"Wrote {len(items)} activities to {OUT_PATH}")
+    print(f"Wrote {len(items)} activities to {ACTIVITY_INDEX_PATH}")
 
 
 if __name__ == "__main__":

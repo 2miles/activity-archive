@@ -2,11 +2,11 @@
 """
 Generate a human-readable activity log from archived JSON.
 
-Input:
-  archive/activities/*.json
+Inputs:
+  - ACTIVITIES_DIR (activity JSON files)
 
-Output:
-  reports/activity_log.txt
+Outputs:
+  - ACTIVITY_LOG_PATH (text report)
 
 Newest -> oldest.
 Runs include pace and total time.
@@ -16,7 +16,6 @@ Walks / hikes / rides include distance only.
 from __future__ import annotations
 
 from datetime import datetime
-from pathlib import Path
 
 from activity_archive.archive import iter_activity_dicts
 from activity_archive.activity import (
@@ -32,9 +31,7 @@ from activity_archive.units import (
     pace_mmss,
 )
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-ACTIVITIES_DIR = PROJECT_ROOT / "archive" / "activities"
-OUT_PATH = PROJECT_ROOT / "derived" / "reports" / "activity_log.txt"
+from activity_archive.paths import ACTIVITIES_DIR, ACTIVITY_LOG_PATH
 
 DELIM = " -- "
 
@@ -59,7 +56,6 @@ def main() -> None:
             continue
         activities.append((dt, a))
 
-    # Newest -> oldest
     activities.sort(key=lambda x: x[0], reverse=True)
 
     lines: list[str] = []
@@ -95,10 +91,10 @@ def main() -> None:
 
         lines.append(line)
 
-    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUT_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    ACTIVITY_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    ACTIVITY_LOG_PATH.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    print(f"Wrote {len(lines)} lines to {OUT_PATH}")
+    print(f"Wrote {len(lines)} lines to {ACTIVITY_LOG_PATH}")
 
 
 if __name__ == "__main__":

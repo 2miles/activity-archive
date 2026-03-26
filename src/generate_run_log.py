@@ -35,9 +35,8 @@ from activity_archive.units import (
     seconds_to_mmss,
 )
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-ACTIVITIES_DIR = PROJECT_ROOT / "archive" / "activities"
-OUT_PATH = PROJECT_ROOT / "derived" / "reports" / "runs_log.txt"
+from activity_archive.paths import ACTIVITIES_DIR, RUNS_LOG_PATH
+
 
 DELIM = " -- "
 SEP = "-" * 46
@@ -135,10 +134,10 @@ def main() -> None:
     for year, month in month_keys:
         lines.extend(render_month_block(year, month, runs_by_month[(year, month)]))
 
-    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUT_PATH.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+    RUNS_LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    RUNS_LOG_PATH.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
-    print(f"Wrote {len(month_keys)} month blocks to {OUT_PATH}")
+    print(f"Wrote {len(month_keys)} month blocks to {RUNS_LOG_PATH}")
 
 
 if __name__ == "__main__":

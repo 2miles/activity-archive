@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import argparse
 import time
-from pathlib import Path
 
 from generate_route_thumbnail import (
     ACTIVITIES_DIR,
-    OUT_DIR,
+    THUMBNAILS_DIR,
     decode_points,
     draw_thumbnail,
     get_encoded_polyline,
@@ -26,7 +25,7 @@ def run(size: int, padding: float, limit: int | None, sleep_seconds: float) -> N
         print(f"Expected activity archive dir: {ACTIVITIES_DIR}")
         return
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    THUMBNAILS_DIR.mkdir(parents=True, exist_ok=True)
 
     n_scanned = 0
     n_written = 0
@@ -48,7 +47,7 @@ def run(size: int, padding: float, limit: int | None, sleep_seconds: float) -> N
                 n_skipped += 1
                 continue
 
-            out_path = OUT_DIR / f"{activity_id}.png"
+            out_path = THUMBNAILS_DIR / f"{activity_id}.png"
 
             if out_path.exists():
                 n_skipped += 1
@@ -84,7 +83,7 @@ def run(size: int, padding: float, limit: int | None, sleep_seconds: float) -> N
     print(
         f"Done. Scanned {n_scanned} | wrote {n_written} | skipped {n_skipped} | errors {n_errors}"
     )
-    print(f"Output: {OUT_DIR}")
+    print(f"Output: {THUMBNAILS_DIR}")
 
 
 def main() -> None:

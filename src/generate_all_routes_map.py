@@ -7,9 +7,8 @@ import re
 import folium
 import polyline
 
+from activity_archive.paths import ACTIVITIES_DIR, ALL_ROUTES_PATH
 
-ACTIVITIES_DIR = Path("archive/activities")
-OUT_PATH = Path("derived/all_routes_map.html")
 
 PORTLAND_CENTER = [45.5231, -122.6765]
 DEFAULT_ZOOM = 10
@@ -100,12 +99,12 @@ def main() -> None:
     m = build_map()
     total_files, added_routes = add_routes_to_map(m)
 
-    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    m.save(str(OUT_PATH))
+    ALL_ROUTES_PATH.parent.mkdir(parents=True, exist_ok=True)
+    m.save(str(ALL_ROUTES_PATH))
 
     print(f"Scanned files:  {total_files}")
     print(f"Routes added:   {added_routes}")
-    print(f"Saved map to:   {OUT_PATH}")
+    print(f"Saved map to:   {ALL_ROUTES_PATH}")
 
 
 if __name__ == "__main__":

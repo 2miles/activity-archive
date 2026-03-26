@@ -20,7 +20,7 @@ import time
 
 from generate_route_map import (
     ACTIVITIES_DIR,
-    OUT_DIR,
+    MAPS_DIR,
     build_output_path,
     generate_map,
 )
@@ -44,7 +44,7 @@ def run(
         print(f"Expected activity archive dir: {ACTIVITIES_DIR}")
         return
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    MAPS_DIR.mkdir(parents=True, exist_ok=True)
 
     n_scanned = 0
     n_written = 0
@@ -103,7 +103,7 @@ def run(
     print(
         f"Done. Scanned {n_scanned} | wrote {n_written} | skipped {n_skipped} | errors {n_errors}"
     )
-    print(f"Output: {OUT_DIR}")
+    print(f"Output: {MAPS_DIR}")
 
 
 def main() -> None:

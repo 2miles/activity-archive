@@ -16,10 +16,9 @@ Design:
 
 from __future__ import annotations
 
-import argparse
 import csv
 from datetime import datetime
-from pathlib import Path
+
 from typing import Any, Dict, List, Optional
 
 from activity_archive.archive import count_json_files, iter_activity_dicts
@@ -33,10 +32,8 @@ from activity_archive.units import (
     safe_int,
 )
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-ARCHIVE_DIR = PROJECT_ROOT / "archive" / "activities"
-OUT_DIR = PROJECT_ROOT / "derived"
-OUT_PATH = OUT_DIR / "activities.csv"
+from activity_archive.paths import ACTIVITIES_DIR, ACTIVITIES_CSV_PATH
+
 
 DISTANCE_MI_DECIMALS = 2
 MOVING_MIN_DECIMALS = 2
@@ -44,10 +41,6 @@ PACE_DECIMALS = 2
 SPEED_MPH_DECIMALS = 2
 ELAPSED_MIN_DECIMALS = 2
 ELEV_FT_DECIMALS = 0
-
-M_PER_MI = 1609.344
-FT_PER_M = 3.280839895
-MPS_TO_MPH = 2.2369362920544
 
 FIELDNAMES = [
     "id",
@@ -65,21 +58,6 @@ FIELDNAMES = [
 ]
 
 
-def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Generate activities CSV from archived JSON.")
-    p.add_argument(
-        "--archive-dir",
-        default=str(ARCHIVE_DIR),
-        help="Directory containing activity JSON files (default: archive/activities)",
-    )
-    p.add_argument(
-        "--out",
-        default=str(OUT_PATH),
-        help="Output CSV path (default: derived/activities.csv)",
-    )
-    return p.parse_args()
-
-
 def hhmmss(dt: Optional[datetime]) -> str:
     if not dt:
         return ""
@@ -91,7 +69,9 @@ def activity_to_row(a: dict[str, Any]) -> Dict[str, Any]:
 
     typ = activity_type(a)
 
-    start_local = parse_iso_datetime(a.get("start_date_local"))
+    start_local = parse_iso_datetime(a.get("start_date_local")) or parse_iso_datetime(
+        a.get("start_date")
+    )
     date_local = start_local.date().isoformat() if start_local else ""
     time_local = hhmmss(start_local)
 
@@ -137,19 +117,15 @@ def activity_to_row(a: dict[str, Any]) -> Dict[str, Any]:
 
 
 def main() -> None:
-    args = parse_args()
-    archive_dir = Path(args.archive_dir)
-    out_path = Path(args.out)
+    if not ACTIVITIES_DIR.exists():
+        raise SystemExit(f"Archive dir not found: {ACTIVITIES_DIR}")
 
-    if not archive_dir.exists():
-        raise SystemExit(f"Archive dir not found: {archive_dir}")
+    ACTIVITIES_CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-
-    total_files = count_json_files(archive_dir)
+    total_files = count_json_files(ACTIVITIES_DIR)
     rows: List[Dict[str, Any]] = []
 
-    for a in iter_activity_dicts(archive_dir):
+    for a in iter_activity_dicts(ACTIVITIES_DIR):
         row = activity_to_row(a)
         if row.get("id"):
             rows.append(row)
@@ -163,13 +139,13 @@ def main() -> None:
         reverse=True,
     )
 
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(out_path, "w", newline="", encoding="utf-8") as f:
+    ACTIVITIES_CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with open(ACTIVITIES_CSV_PATH, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=FIELDNAMES)
         w.writeheader()
         w.writerows(rows)
 
-    print(f"Wrote {len(rows)} activities to {out_path}")
+    print(f"Wrote {len(rows)} activities to {ACTIVITIES_CSV_PATH}")
     skipped = total_files - len({r["id"] for r in rows if r.get("id")})
     if skipped > 0:
         print(f"Note: {skipped} file(s) were unreadable/non-dict/duplicate-id and were skipped.")

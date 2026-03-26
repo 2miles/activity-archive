@@ -28,9 +28,8 @@ import polyline
 from staticmap import CircleMarker, Line, StaticMap
 
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-ACTIVITIES_DIR = PROJECT_ROOT / "archive" / "activities"
-OUT_DIR = PROJECT_ROOT / "derived" / "maps"
+from activity_archive.paths import ACTIVITIES_DIR, MAPS_DIR
+
 
 START_MARKER_COLOR = "#00FF00"
 END_MARKER_COLOR = "#FF0000"
@@ -75,8 +74,8 @@ def latlon_to_lonlat(points: list[tuple[float, float]]) -> list[tuple[float, flo
 
 
 def build_output_path(activity_id: int) -> Path:
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    return OUT_DIR / f"{activity_id}.png"
+    MAPS_DIR.mkdir(parents=True, exist_ok=True)
+    return MAPS_DIR / f"{activity_id}.png"
 
 
 def generate_map(

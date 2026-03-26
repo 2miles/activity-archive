@@ -37,10 +37,8 @@ from typing import Any, Optional
 
 from client import get_client
 
+from activity_archive.paths import ACTIVITIES_DIR, STREAMS_DIR
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-ACTIVITIES_DIR = PROJECT_ROOT / "archive" / "activities"
-STREAMS_DIR = PROJECT_ROOT / "archive" / "streams"
 
 ALL_STREAM_TYPES = [
     "time",
