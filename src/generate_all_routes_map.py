@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-import re
 
 import folium
 import polyline
@@ -19,21 +18,12 @@ def iter_activity_files() -> list[Path]:
     return sorted(ACTIVITIES_DIR.glob("*.json"))
 
 
-def extract_summary_polyline(data: dict) -> str | None:
-    map_value = data.get("map")
-
-    if not map_value:
+def extract_polyline(data: dict) -> str | None:
+    map_data = data.get("map")
+    if not isinstance(map_data, dict):
         return None
 
-    if isinstance(map_value, dict):
-        return map_value.get("summary_polyline")
-
-    if isinstance(map_value, str):
-        match = re.search(r"summary_polyline='([^']+)'", map_value)
-        if match:
-            return match.group(1)
-
-    return None
+    return map_data.get("polyline") or map_data.get("summary_polyline")
 
 
 def load_coords_from_file(path: Path) -> list[tuple[float, float]] | None:
@@ -44,7 +34,7 @@ def load_coords_from_file(path: Path) -> list[tuple[float, float]] | None:
         print(f"Skipping {path.name}: failed to read JSON ({e})")
         return None
 
-    encoded = extract_summary_polyline(data)
+    encoded = extract_polyline(data)
     if not encoded:
         print(f"Skipping {path.name}: no summary polyline found")
         return None
@@ -81,9 +71,17 @@ def add_routes_to_map(m: folium.Map) -> tuple[int, int]:
             continue
 
         folium.PolyLine(
-            locations=coords,  # folium expects [(lat, lon), ...]
-            weight=2,
-            opacity=0.22,
+            locations=coords,
+            weight=1.5,
+            opacity=0.66,
+            color="#FF006E",
+        ).add_to(m)
+
+        folium.PolyLine(
+            locations=coords,
+            weight=6,
+            opacity=0.1,
+            color="#33006E",
         ).add_to(m)
 
         added_routes += 1
