@@ -6,22 +6,25 @@ Design goals:
 - Uses client.get_activity(id) for all writes (DetailedActivity)
 - Uses model_dump(mode="json") so nested objects like map become real JSON
 - Default behavior is incremental sync:
-    download activities AFTER newest archived in activities_v2
-- --refresh re-fetches already archived v2 activities in refresh-cycle batches
-- --backfill uses activity_index.json as an index and populates missing v2 files
+    download activities AFTER newest archived
+- --refresh re-fetches already archived activities in refresh-cycle batches
+- --backfill uses activity_index.json as an index and populates missing files
   from oldest to newest
+- If activity_index.json is missing during --backfill, build it from the
+  Strava activity list first
 - Atomic writes to avoid partial JSON files
 - Preserves _local metadata across overwrites
+- Keeps activity_index.json updated as activities are written
 
 Recommended workflow:
-  # backfill normalized archive from activity_index.json, oldest first
-  python src/export_activities_json_v2.py --backfill --limit 50 --sleep 0.2
+  # backfill archive from activity_index.json, oldest first
+  python src/export_activities_json.py --backfill --limit 50 --sleep 0.2
 
   # normal day-to-day sync for newly created activities
-  python src/export_activities_json_v2.py --limit 25 --sleep 0.2
+  python src/export_activities_json.py --limit 25 --sleep 0.2
 
-  # gradually re-fetch already archived v2 activities to refresh names/metadata
-  python src/export_activities_json_v2.py --refresh --limit 98 --sleep 0.2
+  # gradually re-fetch already archived activities to refresh names/metadata
+  python src/export_activities_json.py --refresh --limit 98 --sleep 0.2
 """
 
 from __future__ import annotations
@@ -34,7 +37,6 @@ from pathlib import Path
 from typing import Any, Optional
 
 from client import get_client
-
 from activity_archive.paths import ACTIVITIES_DIR, ACTIVITY_INDEX_PATH
 
 
@@ -122,13 +124,84 @@ def load_json(path: Path) -> Optional[dict[str, Any]]:
         return None
 
 
-def load_activity_index() -> list[dict]:
+def load_activity_index_items() -> list[dict[str, Any]]:
     try:
-        with open(ACTIVITY_INDEX_PATH, "r", encoding="utf-8") as f:
+        with ACTIVITY_INDEX_PATH.open("r", encoding="utf-8") as f:
             data = json.load(f)
         return data if isinstance(data, list) else []
     except Exception:
         return []
+
+
+def load_activity_index_map() -> dict[int, dict[str, Any]]:
+    by_id: dict[int, dict[str, Any]] = {}
+
+    for item in load_activity_index_items():
+        raw_id = item.get("id")
+        if isinstance(raw_id, int):
+            by_id[raw_id] = item
+
+    return by_id
+
+
+def write_activity_index_map(index_map: dict[int, dict[str, Any]]) -> None:
+    items = list(index_map.values())
+    items.sort(key=lambda x: parse_iso(x.get("start_date")) or datetime.min)
+
+    ACTIVITY_INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with ACTIVITY_INDEX_PATH.open("w", encoding="utf-8") as f:
+        json.dump(items, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+
+def update_activity_index_map(
+    index_map: dict[int, dict[str, Any]],
+    activity_id: int,
+    start_date: str | None,
+) -> None:
+    index_map[activity_id] = {
+        "id": activity_id,
+        "start_date": start_date,
+    }
+
+
+def build_activity_index_from_api(client: Any) -> dict[int, dict[str, Any]]:
+    print("Building activity index from Strava activity list...")
+
+    index_map: dict[int, dict[str, Any]] = {}
+    n_listed = 0
+
+    try:
+        for act in client.get_activities():
+            n_listed += 1
+
+            activity_id = getattr(act, "id", None)
+            start_date = getattr(act, "start_date", None)
+
+            if activity_id is None:
+                continue
+
+            if hasattr(start_date, "isoformat"):
+                start_date_str = start_date.isoformat()
+            elif isinstance(start_date, str):
+                start_date_str = start_date
+            else:
+                start_date_str = None
+
+            index_map[int(activity_id)] = {
+                "id": int(activity_id),
+                "start_date": start_date_str,
+            }
+
+            if n_listed % 100 == 0:
+                print(f"Indexed {n_listed} activities")
+
+    except KeyboardInterrupt:
+        print("\nInterrupted while building activity index.")
+
+    write_activity_index_map(index_map)
+    print(f"Wrote {len(index_map)} activities to {ACTIVITY_INDEX_PATH}")
+    return index_map
 
 
 def ensure_local_block(data: dict[str, Any]) -> dict[str, Any]:
@@ -164,7 +237,7 @@ def merge_local_fields(
 
 def get_refresh_candidates() -> list[Path]:
     """
-    Return archived v2 files that still need refresh in the current cycle.
+    Return archived files that still need refresh in the current cycle.
     Missing recently_refreshed counts as false.
     """
     candidates: list[Path] = []
@@ -184,7 +257,7 @@ def count_refresh_remaining() -> int:
 
 
 def reset_all_refresh_flags() -> int:
-    """Set recently_refreshed = false for all archived v2 JSON files."""
+    """Set recently_refreshed = false for all archived JSON files."""
     n_reset = 0
 
     for path in sorted(ACTIVITIES_DIR.glob("*.json"), key=lambda p: p.name):
@@ -202,25 +275,27 @@ def run_backfill_mode(client: Any, limit: Optional[int], sleep_seconds: float) -
     print("Mode: backfill-from-index")
 
     if not ACTIVITY_INDEX_PATH.exists():
-        print(f"Missing activity index: {ACTIVITY_INDEX_PATH}")
-        return
+        index_map = build_activity_index_from_api(client)
+    else:
+        index_map = load_activity_index_map()
 
-    items = load_activity_index()
-    if not items:
+    if not index_map:
         print("Activity index is empty.")
         return
 
-    items.sort(key=lambda x: x.get("start_date") or "")
+    items = list(index_map.values())
+    items.sort(key=lambda x: parse_iso(x.get("start_date")) or datetime.min)
 
     existing_ids = {path.stem for path in ACTIVITIES_DIR.glob("*.json")}
 
     print(f"Index size: {len(items)}")
-    print(f"Already in v2: {len(existing_ids)}")
+    print(f"Already archived: {len(existing_ids)}")
 
     n_checked = 0
     n_written = 0
     n_skipped_existing = 0
     n_errors = 0
+    index_changed = False
 
     try:
         for item in items:
@@ -245,6 +320,14 @@ def run_backfill_mode(client: Any, limit: Optional[int], sleep_seconds: float) -
                 out_path = ACTIVITIES_DIR / f"{activity_id}.json"
                 atomic_write_json(out_path, data)
 
+                start_date = data.get("start_date")
+                update_activity_index_map(
+                    index_map,
+                    int(activity_id),
+                    start_date if isinstance(start_date, str) else None,
+                )
+                index_changed = True
+
                 existing_ids.add(activity_id)
                 n_written += 1
 
@@ -259,6 +342,9 @@ def run_backfill_mode(client: Any, limit: Optional[int], sleep_seconds: float) -
 
     except KeyboardInterrupt:
         print("\nInterrupted (Ctrl-C). Already-written files are safe.")
+
+    if index_changed:
+        write_activity_index_map(index_map)
 
     print(
         f"Done. Checked {n_checked} | skipped existing {n_skipped_existing} | wrote {n_written} | errors {n_errors}"
@@ -292,9 +378,12 @@ def run_refresh_mode(client: Any, limit: Optional[int], sleep_seconds: float) ->
 
     print(f"Refreshing {len(candidates)} activities...")
 
+    index_map = load_activity_index_map()
+
     n_processed = 0
     n_written = 0
     n_errors = 0
+    index_changed = False
 
     try:
         for path in candidates:
@@ -307,6 +396,14 @@ def run_refresh_mode(client: Any, limit: Optional[int], sleep_seconds: float) ->
                 new_data = merge_local_fields(new_data, old_data)
                 set_recently_refreshed(new_data, True)
                 atomic_write_json(path, new_data)
+
+                start_date = new_data.get("start_date")
+                update_activity_index_map(
+                    index_map,
+                    activity_id,
+                    start_date if isinstance(start_date, str) else None,
+                )
+                index_changed = True
 
                 n_processed += 1
                 n_written += 1
@@ -325,6 +422,9 @@ def run_refresh_mode(client: Any, limit: Optional[int], sleep_seconds: float) ->
     except KeyboardInterrupt:
         print("\nInterrupted (Ctrl-C). Already-written files are safe.")
 
+    if index_changed:
+        write_activity_index_map(index_map)
+
     remaining_after = count_refresh_remaining()
 
     print(f"Done refresh. Processed {n_processed} | wrote {n_written} | errors {n_errors}")
@@ -340,11 +440,9 @@ def run_sync_mode(client: Any, limit: Optional[int], sleep_seconds: float) -> No
     """
     Incremental sync for new activities only.
 
-    If the v2 archive is empty, this behaves like your old exporter did:
-    it fetches the most recent activities first.
-
+    If the archive is empty, this fetches the most recent activities first.
     Once the archive has data, it only lists activities after the newest
-    archived start_date in v2.
+    archived start_date.
     """
     _, newest = get_archive_bounds(ACTIVITIES_DIR)
 
@@ -359,10 +457,12 @@ def run_sync_mode(client: Any, limit: Optional[int], sleep_seconds: float) -> No
         print("Listing activities after newest archived:", newest.isoformat())
 
     activities_iter = client.get_activities(**list_kwargs)
+    index_map = load_activity_index_map()
 
     n_listed = 0
     n_written = 0
     first = True
+    index_changed = False
 
     try:
         for act in activities_iter:
@@ -384,6 +484,15 @@ def run_sync_mode(client: Any, limit: Optional[int], sleep_seconds: float) -> No
             data = merge_local_fields(data, old_data)
 
             atomic_write_json(out_path, data)
+
+            start_date = data.get("start_date")
+            update_activity_index_map(
+                index_map,
+                activity_id,
+                start_date if isinstance(start_date, str) else None,
+            )
+            index_changed = True
+
             n_written += 1
 
             if sleep_seconds > 0:
@@ -395,13 +504,16 @@ def run_sync_mode(client: Any, limit: Optional[int], sleep_seconds: float) -> No
     except KeyboardInterrupt:
         print("\nInterrupted (Ctrl-C). Already-written files are safe.")
 
+    if index_changed:
+        write_activity_index_map(index_map)
+
     print(f"Done sync. Listed {n_listed} | wrote {n_written}")
     print(f"Output: {ACTIVITIES_DIR}")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Export Strava DetailedActivity JSON files into a normalized v2 archive."
+        description="Export Strava DetailedActivity JSON files into a normalized archive."
     )
 
     parser.add_argument(
@@ -419,12 +531,12 @@ def main() -> None:
     parser.add_argument(
         "--refresh",
         action="store_true",
-        help="Refresh already-archived v2 activities not yet refreshed in the current cycle",
+        help="Refresh already-archived activities not yet refreshed in the current cycle",
     )
     parser.add_argument(
         "--backfill",
         action="store_true",
-        help="Populate missing v2 files using ids from activity_index.json, oldest first",
+        help="Populate missing files using ids from activity_index.json, oldest first",
     )
 
     args = parser.parse_args()
