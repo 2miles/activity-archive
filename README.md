@@ -4,6 +4,53 @@ A Python pipeline for exporting Strava activity data into local JSON files for a
 
 The project stores raw activity data and builds derived outputs such as run logs, CSV datasets, and custom heatmaps using a JSON-first archival approach.
 
+## Example Output
+
+### Heatmaps
+
+<img src="images/heatmap_example_1.png" width="300" />
+
+### Route Maps
+
+<img src="images/map_example_16918034629.png" width="300" />
+
+### Thumbnails
+
+<img src="images/thumb_example_16918034629.png" width="200" />
+
+### Run Log
+
+```txt
+==============================================
+March 2026
+----------------------------------------------
+2026-03-26 --  2.05mi -- 11:13/mi --  23:01min
+2026-03-09 --  2.24mi -- 11:17/mi --  25:20min
+2026-03-05 --  2.10mi -- 11:02/mi --  23:08min
+2026-03-01 --  1.01mi --  9:08/mi --   9:13min
+----------------------------------------------
+Runs: 4
+Miles: 7.40
+Time: 01:20:42
+Pace: 10:54/mi
+
+
+==============================================
+February 2026
+----------------------------------------------
+2026-02-26 --  2.16mi --  9:57/mi --  21:28min
+2026-02-22 --  1.01mi -- 10:19/mi --  10:27min
+2026-02-19 --  2.27mi -- 10:18/mi --  23:23min
+2026-02-08 --  2.40mi -- 11:54/mi --  28:36min
+2026-02-05 --  2.11mi -- 10:54/mi --  23:03min
+2026-02-02 --  2.01mi -- 11:28/mi --  23:00min
+----------------------------------------------
+Runs: 6
+Miles: 11.96
+Time: 02:09:57
+Pace: 10:52/mi
+```
+
 ## Setup
 
 ### stravalib
@@ -77,7 +124,9 @@ cd activity-archive
 pip install -r requirements.txt
 ```
 
-### 3. Create .env
+### 3. Create .env in root
+
+This project uses `python-dotenv` to load environment variables from this file.
 
 ```
 STRAVA_CLIENT_ID=xxxxx
@@ -86,7 +135,7 @@ STRAVA_CLIENT_SECRET=xxxxx
 
 ### 4. Authenticate (one-time setup)
 
-#### Step 1 - Run `auth_url.py`
+#### Step 1 - Run `src/auth/auth_url.py`
 
 ```
 python auth/auth_url.py
@@ -103,13 +152,13 @@ This prints a URL like: `https://www.strava.com/oauth/authorize?...`
 
 #### Step 3 — Exchange code for tokens
 
-Open `auth/exchange_code.py` and paste your code:
+Open `src/auth/exchange_code.py` and paste your code:
 
 ```
 CODE = "abc123"
 ```
 
-Then run `python auth/exchange_code.py`
+Then run `python src/auth/exchange_code.py`
 
 This creates: `token.json` in project root.
 
@@ -154,12 +203,20 @@ until you have exported all of your missing streams.
 Once you have initially exported all of your Strava data, you can run the sync command to keep it updated as you
 add more activities.
 
-The first time you run this command it may take a few minutes depending on how many activities you have. As it generates
-route maps, thumbnails, reports, and rebuilts the heatmaps.
+- NOTE The first time you run this command it may take a few minutes depending on how many activities you have. As it generates
+  route maps, thumbnails, reports, and rebuilts the heatmaps.
 
 ```bash
 python src/sync.py
 ```
+
+This command orchestrates the full pipeline:
+
+- Fetches new activities from Strava
+- Downloads missing stream data
+- Regenerates or appends to derived data (CSV, logs, maps, thumbnails)
+
+Internally, this runs the individual scripts in `src/`
 
 ## Design
 
