@@ -8,48 +8,21 @@ The project stores raw activity data and builds derived outputs such as run logs
 
 ### Heatmaps
 
-<img src="images/heatmap_example_1.png" width="300" />
+<img src="images/heatmap_example_1.png" width="450" />
 
 ### Route Maps
 
-<img src="images/map_example_16918034629.png" width="300" />
+<img src="images/map_example_16918034629.png" width="450" />
 
 ### Thumbnails
 
-<img src="images/thumb_example_16918034629.png" width="200" />
+<img src="images/thumb_example_16918034629.png" width="150" />
+<img src="images/thumb_example_5799793209.png" width="150" />
+<img src="images/thumb_example_7187827717.png" width="150" />
 
 ### Run Log
 
-```txt
-==============================================
-March 2026
-----------------------------------------------
-2026-03-26 --  2.05mi -- 11:13/mi --  23:01min
-2026-03-09 --  2.24mi -- 11:17/mi --  25:20min
-2026-03-05 --  2.10mi -- 11:02/mi --  23:08min
-2026-03-01 --  1.01mi --  9:08/mi --   9:13min
-----------------------------------------------
-Runs: 4
-Miles: 7.40
-Time: 01:20:42
-Pace: 10:54/mi
-
-
-==============================================
-February 2026
-----------------------------------------------
-2026-02-26 --  2.16mi --  9:57/mi --  21:28min
-2026-02-22 --  1.01mi -- 10:19/mi --  10:27min
-2026-02-19 --  2.27mi -- 10:18/mi --  23:23min
-2026-02-08 --  2.40mi -- 11:54/mi --  28:36min
-2026-02-05 --  2.11mi -- 10:54/mi --  23:03min
-2026-02-02 --  2.01mi -- 11:28/mi --  23:00min
-----------------------------------------------
-Runs: 6
-Miles: 11.96
-Time: 02:09:57
-Pace: 10:52/mi
-```
+<img src="images/run_log_example.png" width="450" />
 
 ## Setup
 
