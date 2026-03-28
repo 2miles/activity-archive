@@ -49,10 +49,10 @@ def main():
         [PYTHON, "src/generate_route_maps.py", "--sleep", "0.2"],
     )
 
-    # 8. Generate heatmap
+    # 8. Generate heatmaps
     run(
-        "Generate_heatmap",
-        [PYTHON, "src/generate_all_routes_map.py"],
+        "Generate_heatmaps",
+        [PYTHON, "src/generate_heatmaps.py"],
     )
 
     print("\n✓ Update complete")
