@@ -9,7 +9,7 @@ Usage:
     1. Obtain a fresh authorization code using `auth/auth_url.py`.
     2. Paste the code into the CODE variable below.
     3. Run:
-           python auth/exchange_code.py
+           python src/auth/exchange_code.py
 
 Output:
     - Creates or overwrites `token.json` containing:
@@ -30,15 +30,17 @@ from dotenv import load_dotenv
 import os
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-TOKEN_PATH = PROJECT_ROOT / "token.json"
+from activity_archive.paths import TOKEN_PATH
 
 load_dotenv()
 
 CLIENT_ID = int(os.environ["STRAVA_CLIENT_ID"])
 CLIENT_SECRET = os.environ["STRAVA_CLIENT_SECRET"]
 
-CODE = "PASTE_NEW_CODE_HERE"  # <-- from the browser address bar
+
+###############################################################################
+CODE = "PASTE_NEW_CODE_HERE"
+###############################################################################
 
 
 client = Client()
