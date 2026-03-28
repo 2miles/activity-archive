@@ -1,0 +1,6 @@
+folium==0.20.0
+Pillow==12.1.1
+polyline==2.0.4
+python-dotenv==1.2.2
+staticmap==0.5.7
+stravalib==2.4
