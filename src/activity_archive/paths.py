@@ -15,6 +15,7 @@ DERIVED_DIR = PROJECT_ROOT / "derived"
 REPORTS_DIR = DERIVED_DIR / "reports"
 MAPS_DIR = DERIVED_DIR / "maps"
 THUMBNAILS_DIR = DERIVED_DIR / "thumbnails"
+HEATMAPS_DIR = DERIVED_DIR / "heatmaps"
 
 ACTIVITIES_CSV_PATH = DERIVED_DIR / "activities.csv"
 ACTIVITY_LOG_PATH = REPORTS_DIR / "activity_log.txt"
