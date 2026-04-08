@@ -34,22 +34,25 @@ def main():
     # 4. Generate run log
     run("Generate run log", [PYTHON, "src/generate_run_log.py"])
 
-    # 5. Generate activity log
+    # 5. Generate markdown run log
+    run("Generate markdown run log", [PYTHON, "src/generate_run_log_md.py"])
+
+    # 6. Generate activity log
     run("Generate activity log", [PYTHON, "src/generate_activity_log.py"])
 
-    # 6. Generate transparent route thumbnails
+    # 7. Generate transparent route thumbnails
     run(
         "Generate route thumbnails",
         [PYTHON, "src/generate_route_thumbnails.py", "--size", "400"],
     )
 
-    # 7. Generate route maps
+    # 8. Generate route maps
     run(
         "Generate route maps",
         [PYTHON, "src/generate_route_maps.py", "--sleep", "0.2"],
     )
 
-    # 8. Generate heatmaps
+    # 9. Generate heatmaps
     run(
         "Generate_heatmaps",
         [PYTHON, "src/generate_heatmaps.py"],

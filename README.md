@@ -73,6 +73,16 @@ STRAVA_CLIENT_ID=xxxxx
 STRAVA_CLIENT_SECRET=xxxxx
 ```
 
+Optional personal workflow setting:
+
+```conf
+ACTIVITY_ARCHIVE_NOTES_DIR=/path/to/your/notes/activity-archive/derived
+```
+
+If set, `src/generate_run_log_md.py` will also mirror `runs_log.md` into that
+directory. This is intended for personal Obsidian/Notes workflows and is not
+required for normal use.
+
 Here are some other relevant docs
 
 [stravalib: get-started](https://github.com/stravalib/stravalib/tree/main/docs/get-started)
@@ -103,6 +113,12 @@ This project uses `python-dotenv` to load environment variables from this file.
 ```
 STRAVA_CLIENT_ID=xxxxx
 STRAVA_CLIENT_SECRET=xxxxx
+```
+
+Optional:
+
+```
+ACTIVITY_ARCHIVE_NOTES_DIR=/path/to/your/notes/activity-archive/derived
 ```
 
 ### 4. Authenticate (one-time setup)
@@ -186,7 +202,7 @@ This command orchestrates the full pipeline:
 
 - Fetches new activities from Strava
 - Downloads missing stream data
-- Regenerates or appends to derived data (CSV, logs, maps, thumbnails)
+- Regenerates or appends to derived data (CSV, logs, Markdown run log, maps, thumbnails)
 
 Internally, this runs the individual scripts in `src/`
 
@@ -221,6 +237,7 @@ derived/
 derived/reports/
     activity_log.txt # Simple activity log
     run_log.txt    # Log to track running progress
+    runs_log.md    # Mobile-friendly Markdown run log
 
 # Scripts
 src/
@@ -228,6 +245,7 @@ src/
   export_streams_json.py
   generate_csv.py
   generate_run_log.py
+  generate_run_log_md.py
   sync.py
 ```
 
