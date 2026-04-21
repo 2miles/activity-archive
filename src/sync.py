@@ -58,6 +58,12 @@ def main():
         [PYTHON, "src/generate_heatmaps.py"],
     )
 
+    # 10. Generate running distance grid
+    run(
+        "Generate running distance grid",
+        [PYTHON, "src/generate_run_distance_grid.py"],
+    )
+
     print("\n✓ Update complete")
 
 

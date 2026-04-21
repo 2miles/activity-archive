@@ -192,7 +192,7 @@ Once you have initially exported all of your Strava data, you can run the sync c
 add more activities.
 
 - NOTE The first time you run this command it may take a few minutes depending on how many activities you have. As it generates
-  route maps, thumbnails, reports, and rebuilts the heatmaps.
+  route maps, thumbnails, reports, and rebuilds the heatmaps.
 
 ```bash
 python src/sync.py
@@ -202,7 +202,15 @@ This command orchestrates the full pipeline:
 
 - Fetches new activities from Strava
 - Downloads missing stream data
-- Regenerates or appends to derived data (CSV, logs, Markdown run log, maps, thumbnails)
+- Regenerates or appends to derived data (CSV, logs, Markdown run log, maps, thumbnails, heatmaps)
+
+To rebuild only the running distance grid:
+
+```bash
+python src/generate_run_distance_grid.py
+```
+
+This writes `derived/heatmaps/running_distance_grid.html`.
 
 Internally, this runs the individual scripts in `src/`
 
