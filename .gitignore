@@ -216,3 +216,5 @@ reports/
 out/
 
 .DS_Store
+AGENTS.md
+personal/
