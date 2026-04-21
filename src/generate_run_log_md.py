@@ -21,6 +21,8 @@ from datetime import date
 import os
 from pathlib import Path
 
+from dotenv import load_dotenv
+
 from activity_archive.activity import is_run, parse_iso_datetime
 from activity_archive.archive import iter_activity_dicts
 from activity_archive.units import (
@@ -32,6 +34,8 @@ from activity_archive.units import (
     seconds_to_mmss,
 )
 from activity_archive.paths import ACTIVITIES_DIR, RUNS_LOG_MD_PATH
+
+load_dotenv()
 
 
 @dataclass(frozen=True)

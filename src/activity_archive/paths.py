@@ -22,5 +22,6 @@ ACTIVITY_LOG_PATH = REPORTS_DIR / "activity_log.txt"
 RUNS_LOG_PATH = REPORTS_DIR / "runs_log.txt"
 RUNS_LOG_MD_PATH = REPORTS_DIR / "runs_log.md"
 ALL_ROUTES_PATH = DERIVED_DIR / "all_routes_map.html"
+RUN_DISTANCE_GRID_PATH = HEATMAPS_DIR / "running_distance_grid.html"
 
 TOKEN_PATH = PROJECT_ROOT / "token.json"
