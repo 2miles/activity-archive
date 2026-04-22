@@ -214,6 +214,18 @@ This writes `derived/heatmaps/running_distance_grid.html`.
 
 Internally, this runs the individual scripts in `src/`
 
+## Local Server
+
+The repo includes a small read-only FastAPI server for viewing generated files
+from `derived/` locally or over a private network such as Tailscale.
+
+```bash
+.venv/bin/python -m uvicorn server.app:app --host 127.0.0.1 --port 8765
+```
+
+See [docs/local-server.md](docs/local-server.md) for URLs, stopping the server,
+and NAS/Tailscale notes.
+
 ## Design
 
 This project follows a JSON-first archival approach:
