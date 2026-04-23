@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -12,6 +12,7 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from activity_archive.paths import DERIVED_DIR, PROJECT_ROOT
+from server.sync_manager import SyncManager
 
 
 class Artifact(BaseModel):
@@ -22,7 +23,23 @@ class Artifact(BaseModel):
     bytes: int
 
 
+class SyncStatus(BaseModel):
+    state: str
+    running: bool
+    last_started_at: str | None
+    last_finished_at: str | None
+    last_error: str | None
+    last_success_at: str | None
+
+
+class SyncStartResponse(BaseModel):
+    started: bool
+    message: str
+    status: SyncStatus
+
+
 app = FastAPI(title="Activity Archive")
+sync_manager = SyncManager()
 
 
 def artifact_kind(path: Path) -> str:
@@ -82,6 +99,33 @@ def health() -> dict[str, str]:
 @app.get("/api/artifacts")
 def artifacts(include_images: bool = False) -> list[Artifact]:
     return iter_artifacts(include_images=include_images)
+
+
+@app.get("/api/sync/status")
+def sync_status() -> SyncStatus:
+    return SyncStatus.model_validate(sync_manager.snapshot().__dict__)
+
+
+@app.post("/api/sync", status_code=status.HTTP_202_ACCEPTED)
+def start_sync() -> SyncStartResponse:
+    started = sync_manager.start()
+    current_status = SyncStatus.model_validate(sync_manager.snapshot().__dict__)
+
+    if not started:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "started": False,
+                "message": "Sync is already running",
+                "status": current_status.model_dump(),
+            },
+        )
+
+    return SyncStartResponse(
+        started=True,
+        message="Sync started",
+        status=current_status,
+    )
 
 
 app.mount("/derived", StaticFiles(directory=DERIVED_DIR, check_dir=False), name="derived")

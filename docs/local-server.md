@@ -4,8 +4,8 @@ This repo includes a small FastAPI server for viewing generated artifacts from
 `derived/`. It is intended for local or private-network use, such as running on a
 NAS and accessing it over Tailscale.
 
-The server is currently read-only. It can list and serve generated files, but it
-does not yet trigger `sync`.
+The server can list and serve generated files, and it can trigger the existing
+sync pipeline in the background.
 
 ## Start The Server
 
@@ -25,6 +25,7 @@ Open these URLs in a browser:
 ```text
 http://127.0.0.1:8765/api/health
 http://127.0.0.1:8765/api/artifacts
+http://127.0.0.1:8765/api/sync/status
 http://127.0.0.1:8765/derived/heatmaps/running_distance_grid.html
 ```
 
@@ -32,6 +33,7 @@ Expected behavior:
 
 - `/api/health` returns `{"status":"ok"}`.
 - `/api/artifacts` returns a JSON list of generated non-image artifacts.
+- `/api/sync/status` returns the current sync state and last run timestamps.
 - `/derived/heatmaps/running_distance_grid.html` serves the generated running distance grid.
 
 To include maps and thumbnails in the artifact list:
@@ -85,6 +87,8 @@ protected before remote use.
 GET /api/health
 GET /api/artifacts
 GET /api/artifacts?include_images=true
+GET /api/sync/status
+POST /api/sync
 GET /derived/<path>
 ```
 
@@ -92,10 +96,31 @@ GET /derived/<path>
 archive data in `archive/`, `.env`, and `token.json` are not served by this
 server.
 
+## Trigger A Sync
+
+Start the server first, then trigger sync with:
+
+```bash
+curl -X POST http://127.0.0.1:8765/api/sync
+```
+
+Check status with:
+
+```bash
+curl http://127.0.0.1:8765/api/sync/status
+```
+
+Behavior notes:
+
+- The sync runs in the background.
+- Only one sync can run at a time.
+- If a sync is already running, `POST /api/sync` returns HTTP `409`.
+- Status values currently include `idle`, `running`, `success`, and `error`.
+
 ## Future Work
 
-Planned dashboard-oriented endpoints:
+Planned dashboard-oriented work:
 
-- `POST /api/sync` to trigger the existing sync pipeline.
-- `GET /api/sync/status` to report whether sync is running, last success time, and last error.
 - A React/Vite frontend that calls these endpoints and links to generated artifacts.
+- A simple status view for sync history and failures.
+- Auth or other protection before exposing sync control beyond localhost/private tailnet use.
