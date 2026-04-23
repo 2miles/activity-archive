@@ -1,0 +1,350 @@
+:root {
+  color-scheme: light;
+  font-family: "Avenir Next", Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  background:
+    radial-gradient(circle at top left, rgba(116, 198, 157, 0.28), transparent 28rem),
+    linear-gradient(145deg, #f4f1e7 0%, #eef3ea 48%, #f5faf7 100%);
+  color: #173423;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+.page-shell {
+  width: min(1200px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 28px 0 56px;
+}
+
+.hero-panel,
+.content-section {
+  border: 1px solid rgba(23, 52, 35, 0.12);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 24px 60px rgba(40, 70, 48, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.hero-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr);
+  gap: 24px;
+  padding: 28px;
+}
+
+.hero-copy h1,
+.section-heading h2 {
+  margin: 0;
+  letter-spacing: -0.06em;
+}
+
+.hero-copy h1 {
+  max-width: 10ch;
+  font-size: clamp(2.6rem, 6vw, 5.4rem);
+  line-height: 0.95;
+}
+
+.hero-copy p,
+.section-heading p {
+  margin: 16px 0 0;
+  max-width: 48rem;
+  color: #556d5d;
+  font-size: 1.03rem;
+}
+
+.eyebrow,
+.label {
+  display: inline-block;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 0.73rem;
+  color: #4d8c5e;
+}
+
+.sync-panel {
+  padding: 22px;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(10, 36, 20, 0.92), rgba(26, 66, 40, 0.9)),
+    #0f2d1b;
+  color: #edf7ef;
+}
+
+.sync-topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.sync-topline strong {
+  display: block;
+  font-size: 1.35rem;
+  letter-spacing: -0.04em;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 92px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.status-pill.idle {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.status-pill.running {
+  background: #dcf26e;
+  color: #223400;
+}
+
+.status-pill.success {
+  background: #78e08f;
+  color: #15331c;
+}
+
+.status-pill.error {
+  background: #ffb2a4;
+  color: #52170d;
+}
+
+.sync-button {
+  width: 100%;
+  margin-top: 24px;
+  padding: 14px 18px;
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #cbff7c, #74c69d);
+  color: #143020;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+  box-shadow: 0 14px 28px rgba(116, 198, 157, 0.28);
+}
+
+.sync-button:hover:enabled {
+  transform: translateY(-1px);
+}
+
+.sync-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  box-shadow: none;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 22px 0 0;
+}
+
+.status-grid div {
+  padding: 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.status-grid dt {
+  margin: 0;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: rgba(237, 247, 239, 0.65);
+}
+
+.status-grid dd {
+  margin: 6px 0 0;
+  font-size: 0.95rem;
+}
+
+.notice {
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 0.96rem;
+}
+
+.notice.success {
+  background: rgba(120, 224, 143, 0.14);
+  color: #d9f9e2;
+}
+
+.notice.error {
+  background: rgba(255, 178, 164, 0.14);
+  color: #ffd8cf;
+}
+
+.content-section {
+  margin-top: 20px;
+  padding: 24px;
+}
+
+.content-section.secondary {
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: end;
+  margin-bottom: 20px;
+}
+
+.section-heading h2 {
+  font-size: clamp(1.6rem, 4vw, 2.5rem);
+}
+
+.artifact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.artifact-card {
+  display: block;
+  min-height: 190px;
+  padding: 18px;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top right, rgba(203, 255, 124, 0.55), transparent 10rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(240, 247, 242, 0.95));
+  border: 1px solid rgba(23, 52, 35, 0.08);
+  transition: transform 160ms ease, border-color 160ms ease;
+}
+
+.artifact-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(77, 140, 94, 0.4);
+}
+
+.artifact-kind {
+  display: inline-block;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: rgba(77, 140, 94, 0.12);
+  color: #346047;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.artifact-card h3 {
+  margin: 16px 0 8px;
+  font-size: 1.2rem;
+  letter-spacing: -0.04em;
+}
+
+.artifact-card p {
+  margin: 0;
+  color: #57705f;
+  word-break: break-word;
+}
+
+.artifact-card span {
+  display: inline-block;
+  margin-top: 20px;
+  color: #264733;
+  font-weight: 700;
+}
+
+.artifact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.artifact-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) 120px 100px;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(23, 52, 35, 0.08);
+}
+
+.artifact-row:hover {
+  border-color: rgba(77, 140, 94, 0.35);
+}
+
+.artifact-row span:nth-child(2),
+.artifact-row span:nth-child(3) {
+  color: #57705f;
+}
+
+@media (max-width: 1000px) {
+  .hero-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .artifact-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .page-shell {
+    width: min(100vw - 18px, 1200px);
+    padding-top: 16px;
+  }
+
+  .hero-panel,
+  .content-section {
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .status-grid,
+  .artifact-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-heading {
+    display: block;
+  }
+
+  .artifact-row {
+    grid-template-columns: 1fr;
+  }
+}

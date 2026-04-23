@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 
 from fastapi import FastAPI, HTTPException, status
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -13,6 +14,11 @@ if str(SRC_DIR) not in sys.path:
 
 from activity_archive.paths import DERIVED_DIR, PROJECT_ROOT
 from server.sync_manager import SyncManager
+
+WEB_DIR = PROJECT_ROOT / "web"
+WEB_DIST_DIR = WEB_DIR / "dist"
+WEB_INDEX_PATH = WEB_DIST_DIR / "index.html"
+WEB_ASSETS_DIR = WEB_DIST_DIR / "assets"
 
 
 class Artifact(BaseModel):
@@ -128,4 +134,19 @@ def start_sync() -> SyncStartResponse:
     )
 
 
+@app.get("/", include_in_schema=False)
+def dashboard_root():
+    if WEB_INDEX_PATH.exists():
+        return FileResponse(WEB_INDEX_PATH)
+
+    return JSONResponse(
+        {
+            "message": "Frontend build not found.",
+            "next_step": "Run `npm install` and `npm run build` inside `web/`.",
+        },
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+    )
+
+
+app.mount("/assets", StaticFiles(directory=WEB_ASSETS_DIR, check_dir=False), name="assets")
 app.mount("/derived", StaticFiles(directory=DERIVED_DIR, check_dir=False), name="derived")

@@ -216,15 +216,41 @@ Internally, this runs the individual scripts in `src/`
 
 ## Local Server
 
-The repo includes a small read-only FastAPI server for viewing generated files
-from `derived/` locally or over a private network such as Tailscale.
+The repo includes:
+
+- a FastAPI backend in `server/`
+- a React/Vite frontend in `web/`
+
+The backend serves generated files from `derived/`, exposes sync endpoints, and
+can serve the built frontend at `/`.
+
+Frontend development mode:
 
 ```bash
+# terminal 1, repo root
+.venv/bin/python -m uvicorn server.app:app --host 127.0.0.1 --port 8765
+
+# terminal 2
+cd web
+npm install
+npm run dev
+```
+
+Then open `http://127.0.0.1:5173`.
+
+Built frontend mode:
+
+```bash
+cd web
+npm run build
+cd ..
 .venv/bin/python -m uvicorn server.app:app --host 127.0.0.1 --port 8765
 ```
 
-See [docs/local-server.md](docs/local-server.md) for URLs, stopping the server,
-and NAS/Tailscale notes.
+Then open `http://127.0.0.1:8765/`.
+
+See [docs/local-server.md](docs/local-server.md) for the full frontend workflow,
+sync endpoints, troubleshooting, stopping the servers, and NAS/Tailscale notes.
 
 ## Design
 
