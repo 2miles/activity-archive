@@ -100,6 +100,8 @@ Recommended deployment flow:
 
 Only run real sync against the NAS copy, not your laptop copy.
 
+For a shorter day-to-day NAS update checklist, see [docs/deploy.md](deploy.md).
+
 ## First-Time NAS Setup
 
 Before the NAS becomes canonical:
