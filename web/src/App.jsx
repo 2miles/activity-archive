@@ -1,17 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 const FEATURED_PATHS = [
-  "heatmaps/running_distance_grid.html",
-  "heatmaps/all_routes_glow.html",
-  "heatmaps/all_routes_dark.html",
-  "reports/runs_log.md",
-  "reports/activity_log.txt",
-  "activities.csv",
+  'heatmaps/running_distance_grid.html',
+  'heatmaps/all_routes_pink_purple.html',
+  'heatmaps/all_routes_original.html',
+  'reports/runs_log.txt',
+  'reports/activity_log.txt',
 ];
 
 function formatDateTime(value) {
   if (!value) {
-    return "Never";
+    return 'Never';
   }
 
   const date = new Date(value);
@@ -20,8 +19,8 @@ function formatDateTime(value) {
   }
 
   return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
+    dateStyle: 'medium',
+    timeStyle: 'short',
   }).format(date);
 }
 
@@ -34,7 +33,7 @@ function bytesLabel(bytes) {
     return `${bytes} B`;
   }
 
-  const units = ["KB", "MB", "GB"];
+  const units = ['KB', 'MB', 'GB'];
   let value = bytes / 1024;
   let unit = units[0];
 
@@ -50,16 +49,27 @@ function bytesLabel(bytes) {
 }
 
 function buildFeaturedArtifacts(artifacts) {
-  const byPath = new Map(artifacts.map((artifact) => [artifact.path, artifact]));
-  const featured = FEATURED_PATHS.map((path) => byPath.get(path)).filter(Boolean);
+  const byPath = new Map(
+    artifacts.map((artifact) => [artifact.path, artifact]),
+  );
+  const featured = FEATURED_PATHS.map((path) => byPath.get(path)).filter(
+    Boolean,
+  );
   const featuredPaths = new Set(featured.map((artifact) => artifact.path));
-  const remaining = artifacts.filter((artifact) => !featuredPaths.has(artifact.path));
+  const remaining = artifacts.filter(
+    (artifact) => !featuredPaths.has(artifact.path),
+  );
   return { featured, remaining };
 }
 
 function ArtifactCard({ artifact }) {
   return (
-    <a className="artifact-card" href={artifact.url} target="_blank" rel="noreferrer">
+    <a
+      className="artifact-card"
+      href={artifact.url}
+      target="_blank"
+      rel="noreferrer"
+    >
       <div className="artifact-kind">{artifact.kind}</div>
       <h3>{artifact.label}</h3>
       <p>{artifact.path}</p>
@@ -69,36 +79,37 @@ function ArtifactCard({ artifact }) {
 }
 
 function StatusPill({ state, running }) {
-  const tone = running ? "running" : state;
+  const tone = running ? 'running' : state;
 
   return (
     <span className={`status-pill ${tone}`}>
-      {running ? "Running" : state.charAt(0).toUpperCase() + state.slice(1)}
+      {running ? 'Running' : state.charAt(0).toUpperCase() + state.slice(1)}
     </span>
   );
 }
 
 export default function App() {
-  const [health, setHealth] = useState("loading");
+  const [health, setHealth] = useState('loading');
   const [syncStatus, setSyncStatus] = useState(null);
   const [artifacts, setArtifacts] = useState([]);
-  const [syncMessage, setSyncMessage] = useState("");
+  const [syncMessage, setSyncMessage] = useState('');
   const [syncSubmitting, setSyncSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     let cancelled = false;
 
     async function loadDashboard() {
       try {
-        const [healthResponse, statusResponse, artifactsResponse] = await Promise.all([
-          fetch("/api/health"),
-          fetch("/api/sync/status"),
-          fetch("/api/artifacts"),
-        ]);
+        const [healthResponse, statusResponse, artifactsResponse] =
+          await Promise.all([
+            fetch('/api/health'),
+            fetch('/api/sync/status'),
+            fetch('/api/artifacts'),
+          ]);
 
         if (!healthResponse.ok || !statusResponse.ok || !artifactsResponse.ok) {
-          throw new Error("Backend request failed");
+          throw new Error('Backend request failed');
         }
 
         const [healthJson, statusJson, artifactsJson] = await Promise.all([
@@ -114,11 +125,11 @@ export default function App() {
         setHealth(healthJson.status);
         setSyncStatus(statusJson);
         setArtifacts(sortArtifacts(artifactsJson));
-        setErrorMessage("");
+        setErrorMessage('');
       } catch (error) {
         if (!cancelled) {
-          setHealth("error");
-          setErrorMessage("Could not reach the FastAPI server.");
+          setHealth('error');
+          setErrorMessage('Could not reach the FastAPI server.');
         }
       }
     }
@@ -135,17 +146,17 @@ export default function App() {
 
   async function handleSync() {
     setSyncSubmitting(true);
-    setSyncMessage("");
-    setErrorMessage("");
+    setSyncMessage('');
+    setErrorMessage('');
 
     try {
-      const response = await fetch("/api/sync", {
-        method: "POST",
+      const response = await fetch('/api/sync', {
+        method: 'POST',
       });
       const payload = await response.json();
 
       if (!response.ok) {
-        const message = payload?.detail?.message || "Could not start sync.";
+        const message = payload?.detail?.message || 'Could not start sync.';
         setSyncMessage(message);
         if (payload?.detail?.status) {
           setSyncStatus(payload.detail.status);
@@ -156,7 +167,7 @@ export default function App() {
       setSyncStatus(payload.status);
       setSyncMessage(payload.message);
     } catch (error) {
-      setErrorMessage("Sync request failed.");
+      setErrorMessage('Sync request failed.');
     } finally {
       setSyncSubmitting(false);
     }
@@ -171,8 +182,8 @@ export default function App() {
           <span className="eyebrow">Activity Archive</span>
           <h1>Local dashboard for your Strava archive pipeline.</h1>
           <p>
-            Trigger sync, check the current pipeline state, and open the generated reports
-            and heatmaps from one place.
+            Trigger sync, check the current pipeline state, and open the
+            generated reports and heatmaps from one place.
           </p>
         </div>
 
@@ -180,10 +191,13 @@ export default function App() {
           <div className="sync-topline">
             <div>
               <span className="label">Backend</span>
-              <strong>{health === "ok" ? "Connected" : "Unavailable"}</strong>
+              <strong>{health === 'ok' ? 'Connected' : 'Unavailable'}</strong>
             </div>
             {syncStatus ? (
-              <StatusPill state={syncStatus.state} running={syncStatus.running} />
+              <StatusPill
+                state={syncStatus.state}
+                running={syncStatus.running}
+              />
             ) : null}
           </div>
 
@@ -191,9 +205,13 @@ export default function App() {
             className="sync-button"
             type="button"
             onClick={handleSync}
-            disabled={syncSubmitting || syncStatus?.running || health !== "ok"}
+            disabled={syncSubmitting || syncStatus?.running || health !== 'ok'}
           >
-            {syncSubmitting ? "Starting..." : syncStatus?.running ? "Sync Running" : "Run Sync"}
+            {syncSubmitting
+              ? 'Starting...'
+              : syncStatus?.running
+                ? 'Sync Running'
+                : 'Run Sync'}
           </button>
 
           <dl className="status-grid">
@@ -211,7 +229,7 @@ export default function App() {
             </div>
             <div>
               <dt>Last error</dt>
-              <dd>{syncStatus?.last_error || "None"}</dd>
+              <dd>{syncStatus?.last_error || 'None'}</dd>
             </div>
           </dl>
 
@@ -226,7 +244,10 @@ export default function App() {
             <span className="eyebrow">Featured</span>
             <h2>Primary outputs</h2>
           </div>
-          <p>The highest-signal reports and visualizations from the current derived set.</p>
+          <p>
+            The highest-signal reports and visualizations from the current
+            derived set.
+          </p>
         </div>
 
         <div className="artifact-grid">

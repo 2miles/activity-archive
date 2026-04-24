@@ -22,6 +22,11 @@ For active UI work, use frontend development mode.
 For local personal use, NAS use, or Tailscale use, built frontend mode is usually
 simpler.
 
+If the difference between these two modes is new to you, see
+[docs/frontend-modes.md](frontend-modes.md).
+
+If you want to run the app on your NAS in containers, see [docs/docker.md](docker.md).
+
 ## Backend Server
 
 Start the FastAPI server from the repo root:

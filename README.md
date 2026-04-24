@@ -252,6 +252,16 @@ Then open `http://127.0.0.1:8765/`.
 See [docs/local-server.md](docs/local-server.md) for the full frontend workflow,
 sync endpoints, troubleshooting, stopping the servers, and NAS/Tailscale notes.
 
+## Docker
+
+For NAS deployment, this repo also includes:
+
+- [Dockerfile](Dockerfile)
+- [compose.yml](compose.yml)
+
+See [docs/docker.md](docs/docker.md) for the single-container Docker workflow and
+mounted data layout.
+
 ## Design
 
 This project follows a JSON-first archival approach:
