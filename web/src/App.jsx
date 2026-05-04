@@ -180,7 +180,7 @@ export default function App() {
       <section className="hero-panel">
         <div className="hero-copy">
           <span className="eyebrow">Activity Archive</span>
-          <h1>Local dashboard for your Strava archive pipeline.</h1>
+          <h1>Activity Archive Dashboard</h1>
           <p>
             Trigger sync, check the current pipeline state, and open the
             generated reports and heatmaps from one place.

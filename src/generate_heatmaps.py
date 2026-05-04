@@ -9,13 +9,18 @@ import polyline
 
 from activity_archive.paths import ACTIVITIES_DIR, HEATMAPS_DIR
 
-
 PORTLAND_CENTER = [45.5231, -122.6765]
 DEFAULT_ZOOM = 10
 TILES = "CartoDB positron"
 
 
-STYLES = [
+ENABLED_HEATMAPS = [
+    "original",
+    "pink_purple",
+]
+
+
+HEATMAP_STYLES = [
     {
         "name": "original",
         "output": "all_routes_original.html",
@@ -141,6 +146,16 @@ def render_style(style: dict[str, Any], routes: list[list[tuple[float, float]]])
     return out_path
 
 
+def get_enabled_styles() -> list[dict[str, Any]]:
+    styles_by_name = {style["name"]: style for style in HEATMAP_STYLES}
+    unknown_names = [name for name in ENABLED_HEATMAPS if name not in styles_by_name]
+
+    if unknown_names:
+        raise ValueError(f"Unknown enabled heatmap style(s): {', '.join(unknown_names)}")
+
+    return [styles_by_name[name] for name in ENABLED_HEATMAPS]
+
+
 def main() -> None:
     if not ACTIVITIES_DIR.exists():
         raise FileNotFoundError(f"Activities directory not found: {ACTIVITIES_DIR}")
@@ -150,7 +165,7 @@ def main() -> None:
     print(f"Scanned files: {total_files}")
     print(f"Routes loaded: {len(routes)}")
 
-    for style in STYLES:
+    for style in get_enabled_styles():
         out_path = render_style(style, routes)
         print(f"Saved {style['name']}: {out_path}")
 
