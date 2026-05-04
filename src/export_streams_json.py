@@ -5,7 +5,6 @@ Design goals:
 - JSON-first archival: one file per activity id
 - Default behavior is incremental stream sync:
     download streams only for archived activities missing stream JSON
-- --force re-fetches streams even if stream JSON already exists
 - Reads activity ids from archive/activities (filesystem is source of truth)
 - Requests all known stream types at high resolution
 - Atomic writes to avoid partial JSON files
@@ -16,8 +15,6 @@ Behavior:
     scan archived activity JSON files in archive/activities
     skip activities that already have archive/streams/{id}.json
     download streams for missing ones until --limit is reached
-- --force:
-    re-download streams for archived activities even if stream JSON exists
 
 Usage:
   # download streams for up to 50 missing activities

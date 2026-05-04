@@ -126,7 +126,7 @@ ACTIVITY_ARCHIVE_NOTES_DIR=/path/to/your/notes/activity-archive/derived
 #### Step 1 - Run `src/auth/auth_url.py`
 
 ```
-python auth/auth_url.py
+python src/auth/auth_url.py
 ```
 
 This prints a URL like: `https://www.strava.com/oauth/authorize?...`
@@ -164,16 +164,16 @@ This file is used automatically by the rest of the pipeline.
 
 ## Exporting the data
 
-When running initial export you will have to do it in batches because to not hit Stravas rate limit. Stravas allows 100 requests every 15 minutes and up to 1,000 daily.
+When running the initial export you will have to do it in batches to avoid Strava's rate limits. Strava allows 100 read requests every 15 minutes and up to 1,000 daily.
 
-For the inital export of all past workouts run the following command repeatedly, no less than 15 minutes apart,
+For the initial export of all past workouts run the following command repeatedly, no less than 15 minutes apart,
 until you have exported all of your activities.
 
 ```bash
 python src/export_activities_json.py --backfill --limit 95 --sleep 0.2
 ```
 
-- NOTE `--limit 98` is the max limit that will work, if you have recently used any requests, that number may need to be set lower.
+- NOTE `--limit 98` is the practical max limit for a single batch, because listing and other requests also count against the short-term API limit. If you have recently used any requests, set that number lower.
 
 - NOTE The backfill process is safe to re-run. If all activities have already been archived, the script will skip existing entries.
 
@@ -183,7 +183,7 @@ Once all the activities have been exported you can choose to export the stream d
 python src/export_streams_json.py --limit 95 --sleep 0.2
 ```
 
-For the inital export of all past workouts run the following command repeatedly, no less then 15 minutes apart,
+For the initial export of all past workout streams run the following command repeatedly, no less than 15 minutes apart,
 until you have exported all of your missing streams.
 
 ## Syncing Periodically
@@ -202,7 +202,7 @@ This command orchestrates the full pipeline:
 
 - Fetches new activities from Strava
 - Downloads missing stream data
-- Regenerates or appends to derived data (CSV, logs, Markdown run log, maps, thumbnails, heatmaps)
+- Regenerates derived data (CSV, logs, Markdown run log, maps, thumbnails, heatmaps, running distance grid)
 
 To rebuild only the running distance grid:
 
@@ -285,14 +285,15 @@ archive/
   streams/         # GPS + sensor data
 
 derived/
-  heatmaps/        # A heatmaps of all activities
-  maps/            # Full route on map per activity
+  activities.csv   # Activity table rebuilt from archived JSON
+  all_routes_map.html
+  heatmaps/        # Heatmap-style HTML outputs and running distance grid
+  maps/            # Full route map per activity
   thumbnails/      # Simple route line per activity
-  activities.csv   # used to create logs
 
 derived/reports/
     activity_log.txt # Simple activity log
-    run_log.txt    # Log to track running progress
+    runs_log.txt   # Text log to track running progress
     runs_log.md    # Mobile-friendly Markdown run log
 
 # Scripts
@@ -300,8 +301,13 @@ src/
   export_activities_json.py
   export_streams_json.py
   generate_csv.py
+  generate_activity_log.py
   generate_run_log.py
   generate_run_log_md.py
+  generate_route_thumbnails.py
+  generate_route_maps.py
+  generate_heatmaps.py
+  generate_run_distance_grid.py
   sync.py
 ```
 
