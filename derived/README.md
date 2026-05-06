@@ -24,6 +24,7 @@ derived/
   reports/
     activity_log.txt
     runs_log.txt
+    runs_log.html
     runs_log.md
   thumbnails/
     <activity_id>.png
@@ -34,6 +35,7 @@ These files should be treated as disposable build artifacts. Rebuild them from t
 ```bash
 python src/generate_csv.py
 python src/generate_run_log.py
+python src/generate_run_log_html.py
 python src/generate_run_log_md.py
 python src/generate_activity_log.py
 python src/generate_route_thumbnails.py --size 400

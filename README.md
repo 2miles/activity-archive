@@ -202,7 +202,7 @@ This command orchestrates the full pipeline:
 
 - Fetches new activities from Strava
 - Downloads missing stream data
-- Regenerates derived data (CSV, logs, Markdown run log, maps, thumbnails, heatmaps, running distance grid)
+- Regenerates derived data (CSV, logs, HTML and Markdown run logs, maps, thumbnails, heatmaps, running distance grid)
 
 To rebuild only the running distance grid:
 
@@ -294,6 +294,7 @@ derived/
 derived/reports/
     activity_log.txt # Simple activity log
     runs_log.txt   # Text log to track running progress
+    runs_log.html  # Responsive HTML run log
     runs_log.md    # Mobile-friendly Markdown run log
 
 # Scripts
@@ -303,6 +304,7 @@ src/
   generate_csv.py
   generate_activity_log.py
   generate_run_log.py
+  generate_run_log_html.py
   generate_run_log_md.py
   generate_route_thumbnails.py
   generate_route_maps.py

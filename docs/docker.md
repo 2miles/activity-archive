@@ -88,6 +88,13 @@ docker compose up -d --build
 
 That rebuilds the image and restarts the container.
 
+This is what I did to get it refreshed on my NAS
+
+```bash
+sudo docker-compose build --no-cache activity-archive
+sudo docker-compose up -d --force-recreate activity-archive
+```
+
 ## NAS Workflow
 
 Recommended deployment flow:

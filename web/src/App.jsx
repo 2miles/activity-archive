@@ -4,7 +4,7 @@ const FEATURED_PATHS = [
   'heatmaps/running_distance_grid.html',
   'heatmaps/all_routes_pink_purple.html',
   'heatmaps/all_routes_original.html',
-  'reports/runs_log.txt',
+  'reports/runs_log.html',
   'reports/activity_log.txt',
 ];
 
@@ -182,8 +182,8 @@ export default function App() {
           <span className="eyebrow">Activity Archive</span>
           <h1>Activity Archive Dashboard</h1>
           <p>
-            Trigger sync, check the current pipeline state, and open the
-            generated reports and heatmaps from one place.
+            Sync new Strava activity data into your local archive, then view
+            custom heatmaps, data grids, route maps, and run logs.
           </p>
         </div>
 
@@ -241,12 +241,12 @@ export default function App() {
       <section className="content-section">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">Featured</span>
-            <h2>Primary outputs</h2>
+            <span className="eyebrow">Open</span>
+            <h2>Maps and Logs</h2>
           </div>
           <p>
-            The highest-signal reports and visualizations from the current
-            derived set.
+            Quick links to the views you use most: run logs, activity logs,
+            heatmaps, and route maps.
           </p>
         </div>
 
@@ -260,10 +260,10 @@ export default function App() {
       <section className="content-section secondary">
         <div className="section-heading">
           <div>
-            <span className="eyebrow">Archive View</span>
-            <h2>All listed artifacts</h2>
+            <span className="eyebrow">Files</span>
+            <h2>More Outputs</h2>
           </div>
-          <p>Non-image outputs exposed by the FastAPI server.</p>
+          <p>Additional generated files from the local archive.</p>
         </div>
 
         <div className="artifact-list">

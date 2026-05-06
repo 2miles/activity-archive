@@ -40,6 +40,7 @@ All of the following should be generated from local JSON, not live API calls:
 
 - CSV exports
 - Human-readable logs
+- HTML reports
 - Markdown reports
 - Route thumbnails and maps
 - Heatmaps and other visualizations
@@ -149,11 +150,12 @@ The pipeline runs these steps in order:
 3. Generate `derived/activities.csv`
 4. Generate `derived/reports/runs_log.txt`
 5. Generate `derived/reports/runs_log.md`
-6. Generate `derived/reports/activity_log.txt`
-7. Generate missing route thumbnails
-8. Generate missing route maps
-9. Generate heatmaps
-10. Generate the running distance grid
+6. Generate `derived/reports/runs_log.html`
+7. Generate `derived/reports/activity_log.txt`
+8. Generate missing route thumbnails
+9. Generate missing route maps
+10. Generate heatmaps
+11. Generate the running distance grid
 
 ## Typical Workflows
 
