@@ -293,6 +293,7 @@ derived/
 
 derived/reports/
     activity_log.txt # Simple activity log
+    activity_log.html # Responsive HTML activity log
     runs_log.txt   # Text log to track running progress
     runs_log.html  # Responsive HTML run log
     runs_log.md    # Mobile-friendly Markdown run log
@@ -303,6 +304,7 @@ src/
   export_streams_json.py
   generate_csv.py
   generate_activity_log.py
+  generate_activity_log_html.py
   generate_run_log.py
   generate_run_log_html.py
   generate_run_log_md.py

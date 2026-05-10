@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 
 const FEATURED_PATHS = [
+  'reports/runs_log.html',
+  'reports/activity_log.html',
   'heatmaps/running_distance_grid.html',
   'heatmaps/all_routes_pink_purple.html',
   'heatmaps/all_routes_original.html',
-  'reports/runs_log.html',
-  'reports/activity_log.txt',
 ];
 
 function formatDateTime(value) {

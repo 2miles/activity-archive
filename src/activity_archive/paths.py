@@ -19,6 +19,7 @@ HEATMAPS_DIR = DERIVED_DIR / "heatmaps"
 
 ACTIVITIES_CSV_PATH = DERIVED_DIR / "activities.csv"
 ACTIVITY_LOG_PATH = REPORTS_DIR / "activity_log.txt"
+ACTIVITY_LOG_HTML_PATH = REPORTS_DIR / "activity_log.html"
 RUNS_LOG_PATH = REPORTS_DIR / "runs_log.txt"
 RUNS_LOG_MD_PATH = REPORTS_DIR / "runs_log.md"
 RUNS_LOG_HTML_PATH = REPORTS_DIR / "runs_log.html"

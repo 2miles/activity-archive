@@ -152,10 +152,11 @@ The pipeline runs these steps in order:
 5. Generate `derived/reports/runs_log.md`
 6. Generate `derived/reports/runs_log.html`
 7. Generate `derived/reports/activity_log.txt`
-8. Generate missing route thumbnails
-9. Generate missing route maps
-10. Generate heatmaps
-11. Generate the running distance grid
+8. Generate `derived/reports/activity_log.html`
+9. Generate missing route thumbnails
+10. Generate missing route maps
+11. Generate heatmaps
+12. Generate the running distance grid
 
 ## Typical Workflows
 

@@ -45,6 +45,10 @@ def sync_steps(python_executable: str | None = None) -> list[PipelineStep]:
         PipelineStep("Generate HTML run log", (python, "src/generate_run_log_html.py")),
         PipelineStep("Generate activity log", (python, "src/generate_activity_log.py")),
         PipelineStep(
+            "Generate HTML activity log",
+            (python, "src/generate_activity_log_html.py"),
+        ),
+        PipelineStep(
             "Generate route thumbnails",
             (python, "src/generate_route_thumbnails.py", "--size", "400"),
         ),
