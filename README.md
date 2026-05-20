@@ -202,15 +202,7 @@ This command orchestrates the full pipeline:
 
 - Fetches new activities from Strava
 - Downloads missing stream data
-- Regenerates derived data (CSV, logs, HTML and Markdown run logs, maps, thumbnails, heatmaps, running distance grid)
-
-To rebuild only the running distance grid:
-
-```bash
-python src/generate_run_distance_grid.py
-```
-
-This writes `derived/heatmaps/running_distance_grid.html`.
+- Regenerates derived data (CSV, logs, HTML and Markdown run logs, running volume chart, maps, thumbnails, heatmaps, running distance grid)
 
 Internally, this runs the individual scripts in `src/`
 
@@ -297,6 +289,7 @@ derived/reports/
     runs_log.txt   # Text log to track running progress
     runs_log.html  # Responsive HTML run log
     runs_log.md    # Mobile-friendly Markdown run log
+    running_volume.html # Daily running distance chart
 
 # Scripts
 src/
@@ -308,6 +301,7 @@ src/
   generate_run_log.py
   generate_run_log_html.py
   generate_run_log_md.py
+  generate_running_volume.py
   generate_route_thumbnails.py
   generate_route_maps.py
   generate_heatmaps.py

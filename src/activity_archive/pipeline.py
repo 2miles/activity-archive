@@ -43,6 +43,7 @@ def sync_steps(python_executable: str | None = None) -> list[PipelineStep]:
         PipelineStep("Generate run log", (python, "src/generate_run_log.py")),
         PipelineStep("Generate markdown run log", (python, "src/generate_run_log_md.py")),
         PipelineStep("Generate HTML run log", (python, "src/generate_run_log_html.py")),
+        PipelineStep("Generate running volume chart", (python, "src/generate_running_volume.py")),
         PipelineStep("Generate activity log", (python, "src/generate_activity_log.py")),
         PipelineStep(
             "Generate HTML activity log",

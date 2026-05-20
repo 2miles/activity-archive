@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 const FEATURED_PATHS = [
   'reports/runs_log.html',
+  'reports/running_volume.html',
   'reports/activity_log.html',
   'heatmaps/running_distance_grid.html',
   'heatmaps/all_routes_pink_purple.html',
@@ -10,6 +11,7 @@ const FEATURED_PATHS = [
 
 const FEATURED_LABELS = {
   'reports/runs_log.html': 'Run Log',
+  'reports/running_volume.html': 'Run Graph',
   'heatmaps/running_distance_grid.html': 'Calendar Heatmap',
   'heatmaps/all_routes_pink_purple.html': 'Route Heatmap',
   'heatmaps/all_routes_original.html': 'All Routes Map',
@@ -130,6 +132,29 @@ const CalendarPreview = () => {
   );
 };
 
+const VolumePreview = () => {
+  const bars = [10, 24, 14, 36, 20, 42, 26, 58, 31, 47, 22, 54, 38, 28];
+
+  return (
+    <svg className="artifact-preview" viewBox="0 0 132 84" aria-hidden="true">
+      <rect className="preview-surface" x="1" y="1" width="130" height="82" rx="12" />
+      <line x1="12" y1="68" x2="120" y2="68" stroke="#d8ded6" strokeWidth="1" />
+      {bars.map((height, index) => (
+        <rect
+          key={index}
+          x={13 + index * 8}
+          y={68 - height}
+          width="4"
+          height={height}
+          rx="1.5"
+          fill="#71c98b"
+          opacity="0.75"
+        />
+      ))}
+    </svg>
+  );
+};
+
 const RoutesPreview = ({ variant = 'original' }) => {
   const routes = [
     'M14 24 L38 24 L38 42 L64 42 L64 28 L96 28 L96 57 L120 57',
@@ -167,6 +192,9 @@ const RoutesPreview = ({ variant = 'original' }) => {
 const ArtifactPreview = ({ path }) => {
   if (path === 'reports/runs_log.html') {
     return <ListPreview />;
+  }
+  if (path === 'reports/running_volume.html') {
+    return <VolumePreview />;
   }
   if (path === 'reports/activity_log.html') {
     return <ListPreview variant="activity" />;

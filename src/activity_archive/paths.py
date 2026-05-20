@@ -23,6 +23,7 @@ ACTIVITY_LOG_HTML_PATH = REPORTS_DIR / "activity_log.html"
 RUNS_LOG_PATH = REPORTS_DIR / "runs_log.txt"
 RUNS_LOG_MD_PATH = REPORTS_DIR / "runs_log.md"
 RUNS_LOG_HTML_PATH = REPORTS_DIR / "runs_log.html"
+RUNNING_VOLUME_HTML_PATH = REPORTS_DIR / "running_volume.html"
 ALL_ROUTES_PATH = DERIVED_DIR / "all_routes_map.html"
 RUN_DISTANCE_GRID_PATH = HEATMAPS_DIR / "running_distance_grid.html"
 
