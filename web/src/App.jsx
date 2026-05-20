@@ -8,6 +8,16 @@ const FEATURED_PATHS = [
   'heatmaps/all_routes_original.html',
 ];
 
+const FEATURED_LABELS = {
+  'reports/runs_log.html': 'Run Log',
+  'heatmaps/running_distance_grid.html': 'Calendar Heatmap',
+  'heatmaps/all_routes_pink_purple.html': 'Route Heatmap',
+  'heatmaps/all_routes_original.html': 'All Routes Map',
+};
+
+const HIDDEN_OUTPUT_PREFIXES = ['maps/', 'thumbnails/'];
+const HIDDEN_OUTPUT_FILES = new Set(['README.md', '.DS_Store']);
+
 function formatDateTime(value) {
   if (!value) {
     return 'Never';
@@ -28,41 +38,153 @@ function sortArtifacts(artifacts) {
   return [...artifacts].sort((a, b) => a.label.localeCompare(b.label));
 }
 
-function bytesLabel(bytes) {
-  if (bytes < 1024) {
-    return `${bytes} B`;
-  }
-
-  const units = ['KB', 'MB', 'GB'];
-  let value = bytes / 1024;
-  let unit = units[0];
-
-  for (const nextUnit of units) {
-    unit = nextUnit;
-    if (value < 1024 || nextUnit === units.at(-1)) {
-      break;
-    }
-    value /= 1024;
-  }
-
-  return `${value.toFixed(value >= 10 ? 0 : 1)} ${unit}`;
-}
-
 function buildFeaturedArtifacts(artifacts) {
+  const visibleArtifacts = artifacts.filter(
+    (artifact) =>
+      !HIDDEN_OUTPUT_FILES.has(artifact.path) &&
+      !HIDDEN_OUTPUT_PREFIXES.some((prefix) => artifact.path.startsWith(prefix)),
+  );
   const byPath = new Map(
-    artifacts.map((artifact) => [artifact.path, artifact]),
+    visibleArtifacts.map((artifact) => [artifact.path, artifact]),
   );
-  const featured = FEATURED_PATHS.map((path) => byPath.get(path)).filter(
-    Boolean,
-  );
+  const featured = FEATURED_PATHS.map((path) => {
+    const artifact = byPath.get(path);
+    if (!artifact) {
+      return null;
+    }
+    return {
+      ...artifact,
+      label: FEATURED_LABELS[path] || artifact.label,
+    };
+  }).filter(Boolean);
   const featuredPaths = new Set(featured.map((artifact) => artifact.path));
-  const remaining = artifacts.filter(
+  const remaining = visibleArtifacts.filter(
     (artifact) => !featuredPaths.has(artifact.path),
   );
   return { featured, remaining };
 }
 
-function ArtifactCard({ artifact }) {
+const ListPreview = ({ variant = 'run' }) => {
+  const rows =
+    variant === 'activity'
+      ? [
+          ['#cfeee0', '#164e47', '#dff4e8'],
+          ['#f0e1ff', '#5a3180', '#f7edff'],
+          ['#d9e9ff', '#214f82', '#edf5ff'],
+          ['#ffe3cc', '#7b4217', '#fff0e3'],
+        ]
+      : [
+          ['#d8f3dc', '#164e47', '#edf8ef'],
+          ['#cfeee0', '#164e47', '#f1faf3'],
+          ['#bfe6d0', '#164e47', '#e8f6ed'],
+          ['#d8f3dc', '#164e47', '#f5fbf6'],
+        ];
+
+  return (
+    <svg className="artifact-preview" viewBox="0 0 132 84" aria-hidden="true">
+      <rect className="preview-surface" x="1" y="1" width="130" height="82" rx="12" />
+      {rows.map(([chip, line, fill], index) => {
+        const y = 13 + index * 17;
+        return (
+          <g key={`${variant}-${index}`}>
+            <rect x="12" y={y - 4} width="108" height="12" rx="6" fill={fill} />
+            <circle cx="20" cy={y + 2} r="3.5" fill={chip} />
+            <rect x="30" y={y - 1} width={index % 2 === 0 ? 56 : 42} height="2.5" rx="1.25" fill={line} opacity="0.8" />
+            <rect x="94" y={y - 1} width="16" height="2.5" rx="1.25" fill={line} opacity="0.35" />
+          </g>
+        );
+      })}
+    </svg>
+  );
+};
+
+const CalendarPreview = () => {
+  const fills = [
+    '#e9f7ec',
+    '#d6f0dc',
+    '#b9e7c5',
+    '#83d79a',
+    '#4fb96c',
+  ];
+
+  return (
+    <svg className="artifact-preview" viewBox="0 0 132 84" aria-hidden="true">
+      <rect className="preview-surface" x="1" y="1" width="130" height="82" rx="12" />
+      {Array.from({ length: 7 }).map((_, row) =>
+        Array.from({ length: 12 }).map((__, col) => {
+          const value = (row * 3 + col * 5 + (col > 7 ? 2 : 0)) % fills.length;
+          return (
+            <rect
+              key={`${row}-${col}`}
+              x={12 + col * 9}
+              y={10 + row * 9}
+              width="6"
+              height="6"
+              rx="1.5"
+              fill={fills[value]}
+            />
+          );
+        }),
+      )}
+    </svg>
+  );
+};
+
+const RoutesPreview = ({ variant = 'original' }) => {
+  const routes = [
+    'M14 24 L38 24 L38 42 L64 42 L64 28 L96 28 L96 57 L120 57',
+    'M17 60 L37 60 L37 44 L64 44 L64 61 L88 61 L88 45 L117 45',
+    'M25 15 L25 34 L51 34 L51 43 L78 43 L78 33 L111 33',
+    'M13 50 L31 50 L31 35 L63 35 L63 17 L93 17 L93 34 L119 34',
+    'M52 71 L52 56 L66 56 L66 41 L96 41 L96 20',
+    'M21 43 L48 43 L48 31 L65 31 L65 43 L101 43 L101 62',
+    'M32 66 L32 52 L63 52 L63 43 L87 43 L87 25',
+    'M37 44 L64 44 L64 43 L92 43',
+    'M39 42 L64 42 L64 44 L94 44',
+    'M35 45 L63 45 L63 42 L90 42',
+  ];
+  const isGlow = variant === 'glow';
+
+  return (
+    <svg className="artifact-preview route-preview" viewBox="0 0 132 84" aria-hidden="true">
+      <rect className="preview-surface" x="1" y="1" width="130" height="82" rx="12" />
+      <path d="M0 57 L132 18" stroke="#dce8dc" strokeWidth="1" opacity="0.8" />
+      <path d="M0 27 L132 66" stroke="#dce8dc" strokeWidth="1" opacity="0.65" />
+      {routes.map((route) =>
+        isGlow ? (
+          <g key={route}>
+            <path d={route} fill="none" stroke="#33006E" strokeWidth="6" strokeLinecap="round" opacity="0.1" />
+            <path d={route} fill="none" stroke="#FF006E" strokeWidth="1.5" strokeLinecap="round" opacity="0.66" />
+          </g>
+        ) : (
+          <path key={route} d={route} fill="none" stroke="#FF006E" strokeWidth="1.5" strokeLinecap="round" opacity="1" />
+        ),
+      )}
+    </svg>
+  );
+};
+
+const ArtifactPreview = ({ path }) => {
+  if (path === 'reports/runs_log.html') {
+    return <ListPreview />;
+  }
+  if (path === 'reports/activity_log.html') {
+    return <ListPreview variant="activity" />;
+  }
+  if (path === 'heatmaps/running_distance_grid.html') {
+    return <CalendarPreview />;
+  }
+  if (path === 'heatmaps/all_routes_pink_purple.html') {
+    return <RoutesPreview variant="glow" />;
+  }
+  if (path === 'heatmaps/all_routes_original.html') {
+    return <RoutesPreview />;
+  }
+
+  return null;
+};
+
+const ArtifactCard = ({ artifact }) => {
   return (
     <a
       className="artifact-card"
@@ -70,15 +192,13 @@ function ArtifactCard({ artifact }) {
       target="_blank"
       rel="noreferrer"
     >
-      <div className="artifact-kind">{artifact.kind}</div>
       <h3>{artifact.label}</h3>
-      <p>{artifact.path}</p>
-      <span>{bytesLabel(artifact.bytes)}</span>
+      <ArtifactPreview path={artifact.path} />
     </a>
   );
-}
+};
 
-function StatusPill({ state, running }) {
+const StatusPill = ({ state, running }) => {
   const tone = running ? 'running' : state;
 
   return (
@@ -86,9 +206,9 @@ function StatusPill({ state, running }) {
       {running ? 'Running' : state.charAt(0).toUpperCase() + state.slice(1)}
     </span>
   );
-}
+};
 
-export default function App() {
+const App = () => {
   const [health, setHealth] = useState('loading');
   const [syncStatus, setSyncStatus] = useState(null);
   const [artifacts, setArtifacts] = useState([]);
@@ -277,11 +397,12 @@ export default function App() {
             >
               <span>{artifact.label}</span>
               <span>{artifact.kind}</span>
-              <span>{bytesLabel(artifact.bytes)}</span>
             </a>
           ))}
         </div>
       </section>
     </main>
   );
-}
+};
+
+export default App;

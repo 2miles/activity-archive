@@ -68,6 +68,10 @@ def artifact_label(path: Path) -> str:
     return name.title() if name else path.name
 
 
+def is_support_file(path: Path) -> bool:
+    return path.name.startswith(".") or path.name.lower() == "readme.md"
+
+
 def iter_artifacts(include_images: bool = False) -> list[Artifact]:
     if not DERIVED_DIR.exists():
         return []
@@ -75,7 +79,7 @@ def iter_artifacts(include_images: bool = False) -> list[Artifact]:
     artifacts: list[Artifact] = []
 
     for path in sorted(DERIVED_DIR.rglob("*")):
-        if not path.is_file() or path.name == ".DS_Store":
+        if not path.is_file() or is_support_file(path):
             continue
 
         kind = artifact_kind(path)

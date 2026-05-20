@@ -240,10 +240,13 @@ select {
 }
 
 .artifact-card {
-  display: block;
-  min-height: 190px;
-  padding: 18px;
-  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 116px;
+  padding: 16px;
+  border-radius: 16px;
   background:
     radial-gradient(circle at top right, rgba(203, 255, 124, 0.55), transparent 10rem),
     linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(240, 247, 242, 0.95));
@@ -256,35 +259,28 @@ select {
   border-color: rgba(77, 140, 94, 0.4);
 }
 
-.artifact-kind {
-  display: inline-block;
-  padding: 5px 8px;
-  border-radius: 999px;
-  background: rgba(77, 140, 94, 0.12);
-  color: #346047;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
 .artifact-card h3 {
-  margin: 16px 0 8px;
-  font-size: 1.2rem;
-  letter-spacing: -0.04em;
-}
-
-.artifact-card p {
   margin: 0;
-  color: #57705f;
-  word-break: break-word;
+  min-width: 0;
+  font-size: 1.2rem;
+  line-height: 1.15;
+  font-weight: 700;
 }
 
-.artifact-card span {
-  display: inline-block;
-  margin-top: 20px;
-  color: #264733;
-  font-weight: 700;
+.artifact-preview {
+  flex: 0 0 132px;
+  width: 132px;
+  height: 84px;
+  overflow: visible;
+}
+
+.preview-surface {
+  fill: rgba(255, 255, 255, 0.74);
+  stroke: rgba(23, 52, 35, 0.1);
+}
+
+.route-preview .preview-surface {
+  fill: #f4f1e7;
 }
 
 .artifact-list {
@@ -295,7 +291,7 @@ select {
 
 .artifact-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.8fr) 120px 100px;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
   padding: 14px 16px;
@@ -308,9 +304,12 @@ select {
   border-color: rgba(77, 140, 94, 0.35);
 }
 
-.artifact-row span:nth-child(2),
-.artifact-row span:nth-child(3) {
+.artifact-row span:nth-child(2) {
   color: #57705f;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 @media (max-width: 1000px) {
@@ -340,11 +339,15 @@ select {
     grid-template-columns: 1fr;
   }
 
-  .section-heading {
-    display: block;
+  .artifact-card {
+    min-height: 104px;
   }
 
   .artifact-row {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .section-heading {
+    display: block;
   }
 }
