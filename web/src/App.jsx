@@ -19,6 +19,7 @@ const FEATURED_LABELS = {
 
 const HIDDEN_OUTPUT_PREFIXES = ['maps/', 'thumbnails/'];
 const HIDDEN_OUTPUT_FILES = new Set(['README.md', '.DS_Store']);
+const HIDDEN_OUTPUT_SEGMENTS = new Set(['@synoresource', '@eadir']);
 
 function formatDateTime(value) {
   if (!value) {
@@ -44,6 +45,13 @@ function buildFeaturedArtifacts(artifacts) {
   const visibleArtifacts = artifacts.filter(
     (artifact) =>
       !HIDDEN_OUTPUT_FILES.has(artifact.path) &&
+      !artifact.path
+        .split('/')
+        .some(
+          (segment) =>
+            segment.startsWith('@') ||
+            HIDDEN_OUTPUT_SEGMENTS.has(segment.toLowerCase()),
+        ) &&
       !HIDDEN_OUTPUT_PREFIXES.some((prefix) => artifact.path.startsWith(prefix)),
   );
   const byPath = new Map(

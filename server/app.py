@@ -69,7 +69,14 @@ def artifact_label(path: Path) -> str:
 
 
 def is_support_file(path: Path) -> bool:
-    return path.name.startswith(".") or path.name.lower() == "readme.md"
+    lower_parts = {part.lower() for part in path.parts}
+    return (
+        path.name.startswith(".")
+        or path.name.lower() == "readme.md"
+        or any(part.startswith("@") for part in path.parts)
+        or "@synoresource" in lower_parts
+        or "@eadir" in lower_parts
+    )
 
 
 def iter_artifacts(include_images: bool = False) -> list[Artifact]:
