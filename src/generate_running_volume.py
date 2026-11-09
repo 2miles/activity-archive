@@ -17,7 +17,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, timedelta
 from html import escape
-from math import ceil, floor, log10
+from math import ceil
 from pathlib import Path
 
 from activity_archive.activity import activity_start_local, is_run
@@ -87,27 +87,13 @@ def chart_y(value: float, max_value: float, top_pad: int, plot_height: int) -> f
     return top_pad + plot_height - (value / max_value) * plot_height
 
 
-def linear_axis(max_value: float, target_intervals: int = 4) -> tuple[float, list[float]]:
-    """Return a rounded-up chart maximum and evenly spaced, human-friendly ticks."""
+def linear_axis(max_value: float) -> tuple[float, list[float]]:
+    """Return an integer-mile chart maximum and one-mile tick marks."""
     if max_value <= 0:
         return 1.0, [0.0, 1.0]
 
-    rough_interval = max_value / target_intervals
-    magnitude = 10 ** floor(log10(rough_interval))
-    normalized_interval = rough_interval / magnitude
-
-    if normalized_interval <= 1:
-        nice_interval = magnitude
-    elif normalized_interval <= 2:
-        nice_interval = 2 * magnitude
-    elif normalized_interval <= 5:
-        nice_interval = 5 * magnitude
-    else:
-        nice_interval = 10 * magnitude
-
-    axis_max = nice_interval * ceil(max_value / nice_interval)
-    interval_count = round(axis_max / nice_interval)
-    ticks = [tick * nice_interval for tick in range(interval_count + 1)]
+    axis_max = float(ceil(max_value))
+    ticks = [float(miles) for miles in range(int(axis_max) + 1)]
     return axis_max, ticks
 
 
