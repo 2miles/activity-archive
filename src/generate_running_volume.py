@@ -17,6 +17,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, timedelta
 from html import escape
+from math import ceil, floor, log10
 from pathlib import Path
 
 from activity_archive.activity import activity_start_local, is_run
@@ -86,6 +87,30 @@ def chart_y(value: float, max_value: float, top_pad: int, plot_height: int) -> f
     return top_pad + plot_height - (value / max_value) * plot_height
 
 
+def linear_axis(max_value: float, target_intervals: int = 4) -> tuple[float, list[float]]:
+    """Return a rounded-up chart maximum and evenly spaced, human-friendly ticks."""
+    if max_value <= 0:
+        return 1.0, [0.0, 1.0]
+
+    rough_interval = max_value / target_intervals
+    magnitude = 10 ** floor(log10(rough_interval))
+    normalized_interval = rough_interval / magnitude
+
+    if normalized_interval <= 1:
+        nice_interval = magnitude
+    elif normalized_interval <= 2:
+        nice_interval = 2 * magnitude
+    elif normalized_interval <= 5:
+        nice_interval = 5 * magnitude
+    else:
+        nice_interval = 10 * magnitude
+
+    axis_max = nice_interval * ceil(max_value / nice_interval)
+    interval_count = round(axis_max / nice_interval)
+    ticks = [tick * nice_interval for tick in range(interval_count + 1)]
+    return axis_max, ticks
+
+
 def build_calendar_years(days: list[VolumeDay]) -> list[list[VolumeDay]]:
     if not days:
         return []
@@ -122,7 +147,8 @@ def build_calendar_years(days: list[VolumeDay]) -> list[list[VolumeDay]]:
 def render_svg(
     days: list[VolumeDay],
     chart_index: int,
-    max_daily_value: float,
+    axis_max: float,
+    y_tick_values: list[float],
 ) -> str:
     if not days:
         return """
@@ -139,12 +165,9 @@ def render_svg(
     width = left_pad + right_pad + len(days) * day_width
     height = top_pad + plot_height + bottom_pad
     chart_bottom = top_pad + plot_height
-    y_ticks = 4
-
     grid_lines = []
-    for tick in range(y_ticks + 1):
-        daily_value = max_daily_value * tick / y_ticks
-        y = chart_y(daily_value, max_daily_value, top_pad, plot_height)
+    for daily_value in y_tick_values:
+        y = chart_y(daily_value, axis_max, top_pad, plot_height)
         grid_lines.append(
             f"""
             <g>
@@ -175,7 +198,7 @@ def render_svg(
             continue
 
         x = left_pad + index * day_width - 0.5
-        y = chart_y(volume_day.miles, max_daily_value, top_pad, plot_height)
+        y = chart_y(volume_day.miles, axis_max, top_pad, plot_height)
         bar_height = max(1.0, chart_bottom - y)
         label = f"{volume_day.day.isoformat()}: {volume_day.miles:.2f} mi"
         bars.append(
@@ -203,7 +226,8 @@ def render_svg(
 def render_chart_panel(
     days: list[VolumeDay],
     chart_index: int,
-    max_daily_value: float,
+    axis_max: float,
+    y_tick_values: list[float],
 ) -> str:
     real_days = [day for day in days if not day.is_padding]
     panel_run_days = [day for day in real_days if day.miles > 0]
@@ -221,15 +245,16 @@ def render_chart_panel(
           <span>{panel_miles:.1f} miles</span>
         </div>
       </div>
-      {render_svg(days, chart_index, max_daily_value)}
+      {render_svg(days, chart_index, axis_max, y_tick_values)}
     </section>"""
 
 
 def render_html(days: list[VolumeDay]) -> str:
     max_daily_value = max((day.miles for day in days), default=1.0)
+    axis_max, y_tick_values = linear_axis(max_daily_value)
     year_panels = build_calendar_years(days)
     chart_panels = [
-        render_chart_panel(chart_days, index, max_daily_value)
+        render_chart_panel(chart_days, index, axis_max, y_tick_values)
         for index, chart_days in enumerate(year_panels, start=1)
     ]
     return f"""<!doctype html>
@@ -444,7 +469,7 @@ def render_html(days: list[VolumeDay]) -> str:
       <span class="legend-item"><span class="legend-swatch"></span>Daily miles</span>
     </div>
 
-    {''.join(chart_panels) if chart_panels else render_svg(days, 1, max_daily_value)}
+    {''.join(chart_panels) if chart_panels else render_svg(days, 1, axis_max, y_tick_values)}
   </main>
 </body>
 </html>
