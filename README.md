@@ -19,7 +19,7 @@ The project stores raw activity data and builds derived outputs such as run logs
 <img src="images/thumb_example_16918034629.png" width="150" />
 <img src="images/thumb_example_5799793209.png" width="150" />
 
-### Run Log
+### Running Log
 
 <img src="images/run_log_example.png" width="450" />
 

@@ -315,7 +315,7 @@ def render_html(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Running Mileage</title>
+  <title>Running Graph</title>
   <style>
     :root {{
       color-scheme: dark;
@@ -520,7 +520,7 @@ def render_html(
 <body>
   <main>
     <header>
-      <h1>Running <span>Mileage</span></h1>
+      <h1>Running <span>Graph</span></h1>
     </header>
 
     {''.join(chart_panels) if chart_panels else render_svg(days, 1, axis_max, y_tick_values)}

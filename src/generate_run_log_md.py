@@ -128,7 +128,7 @@ def main() -> None:
     total_miles = sum(rr.dist_mi for runs in runs_by_month.values() for rr in runs)
     total_seconds = sum(rr.moving_seconds for runs in runs_by_month.values() for rr in runs)
 
-    lines = ["# Run Log", ""]
+    lines = ["# Running Log", ""]
     lines.append(f"- Months: **{len(month_keys)}**")
     lines.append(f"- Runs: **{total_runs}**")
     lines.append(f"- Miles: **{total_miles:.2f}**")

@@ -10,8 +10,8 @@ const FEATURED_PATHS = [
 ];
 
 const FEATURED_LABELS = {
-  'reports/runs_log.html': 'Run Log',
-  'reports/running_volume.html': 'Run Graph',
+  'reports/runs_log.html': 'Running Log',
+  'reports/running_volume.html': 'Running Graph',
   'heatmaps/running_distance_grid.html': 'Calendar Heatmap',
   'heatmaps/all_routes_pink_purple.html': 'Route Heatmap',
   'heatmaps/all_routes_original.html': 'All Routes Map',
