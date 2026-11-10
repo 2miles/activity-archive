@@ -33,6 +33,17 @@ class VolumeDay:
     is_padding: bool = False
 
 
+@dataclass(frozen=True)
+class YearRunStats:
+    run_count: int
+    total_miles: float
+    longest_miles: float
+
+    @property
+    def average_miles(self) -> float:
+        return self.total_miles / self.run_count if self.run_count else 0.0
+
+
 def load_daily_run_miles(activities_dir: Path) -> dict[date, float]:
     if not activities_dir.exists():
         raise FileNotFoundError(f"Missing activities archive dir: {activities_dir}")
@@ -54,6 +65,36 @@ def load_daily_run_miles(activities_dir: Path) -> dict[date, float]:
         daily_miles[dt_local.date()] += miles
 
     return dict(daily_miles)
+
+
+def load_yearly_run_stats(activities_dir: Path) -> dict[int, YearRunStats]:
+    if not activities_dir.exists():
+        raise FileNotFoundError(f"Missing activities archive dir: {activities_dir}")
+
+    yearly_runs: dict[int, list[float]] = defaultdict(list)
+
+    for activity in iter_activity_dicts(activities_dir):
+        if not is_run(activity):
+            continue
+
+        dt_local = activity_start_local(activity)
+        if dt_local is None:
+            continue
+
+        miles = meters_to_miles(safe_float(activity.get("distance")))
+        if miles <= 0:
+            continue
+
+        yearly_runs[dt_local.year].append(miles)
+
+    return {
+        year: YearRunStats(
+            run_count=len(run_miles),
+            total_miles=sum(run_miles),
+            longest_miles=max(run_miles),
+        )
+        for year, run_miles in yearly_runs.items()
+    }
 
 
 def build_volume_days(daily_miles: dict[date, float]) -> list[VolumeDay]:
@@ -189,7 +230,7 @@ def render_svg(
         label = f"{volume_day.day.isoformat()}: {volume_day.miles:.2f} mi"
         bars.append(
             f"""
-            <rect class="daily-bar" x="{x:.2f}" y="{y:.2f}" width="3" height="{bar_height:.2f}">
+            <rect class="daily-bar" x="{x:.2f}" y="{y:.2f}" width="3" height="{bar_height:.2f}" fill="url(#bar-gradient-{chart_index})">
               <title>{escape(label)}</title>
             </rect>"""
         )
@@ -199,11 +240,20 @@ def render_svg(
         <svg class="volume-chart" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="chart-title-{chart_index} chart-desc-{chart_index}">
           <title id="chart-title-{chart_index}">Daily running distance</title>
           <desc id="chart-desc-{chart_index}">Each bar is one day of running distance.</desc>
+          <defs>
+            <linearGradient id="bar-gradient-{chart_index}" x1="0" y1="{chart_bottom}" x2="0" y2="{top_pad}" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#08713a" />
+              <stop offset="28%" stop-color="#15964a" />
+              <stop offset="50%" stop-color="#55d45f" />
+              <stop offset="78%" stop-color="#bde64b" />
+              <stop offset="100%" stop-color="#f2dc3f" />
+            </linearGradient>
+          </defs>
           <rect class="chart-bg" x="0" y="0" width="{width}" height="{height}" rx="10" />
           {''.join(grid_lines)}
           {''.join(month_ticks)}
           <line class="axis-line" x1="{left_pad}" y1="{chart_bottom}" x2="{width - right_pad}" y2="{chart_bottom}" />
-          <text class="axis-title" x="16" y="{top_pad + 68}" transform="rotate(-90 16 {top_pad + 68})">Daily miles</text>
+          <text class="axis-unit" x="{left_pad - 10}" y="{top_pad - 10}" text-anchor="end">mi</text>
           {''.join(bars)}
         </svg>
       </div>"""
@@ -214,33 +264,50 @@ def render_chart_panel(
     chart_index: int,
     axis_max: float,
     y_tick_values: list[float],
+    run_stats: YearRunStats | None = None,
 ) -> str:
     real_days = [day for day in days if not day.is_padding]
     panel_run_days = [day for day in real_days if day.miles > 0]
     panel_miles = sum(day.miles for day in real_days)
     start = days[0].day
+    if run_stats is None:
+        run_stats = YearRunStats(
+            run_count=len(panel_run_days),
+            total_miles=panel_miles,
+            longest_miles=max((day.miles for day in panel_run_days), default=0.0),
+        )
 
     return f"""
     <section class="chart-panel">
       <div class="chart-heading">
-        <div>
-          <h2>{escape(start.strftime("%Y"))}</h2>
-        </div>
-        <div class="chart-summary">
-          <span>{len(panel_run_days)} run days</span>
-          <span>{panel_miles:.1f} miles</span>
-        </div>
+        <h2>{escape(start.strftime("%Y"))}</h2>
+        <dl class="chart-summary">
+          <div><dt>Distance</dt><dd>{run_stats.total_miles:.1f} <span>mi</span></dd></div>
+          <div><dt>Runs</dt><dd>{run_stats.run_count}</dd></div>
+          <div><dt>Average</dt><dd>{run_stats.average_miles:.1f} <span>mi</span></dd></div>
+          <div><dt>Longest</dt><dd>{run_stats.longest_miles:.1f} <span>mi</span></dd></div>
+        </dl>
       </div>
       {render_svg(days, chart_index, axis_max, y_tick_values)}
     </section>"""
 
 
-def render_html(days: list[VolumeDay]) -> str:
+def render_html(
+    days: list[VolumeDay],
+    yearly_run_stats: dict[int, YearRunStats] | None = None,
+) -> str:
     max_daily_value = max((day.miles for day in days), default=1.0)
     axis_max, y_tick_values = linear_axis(max_daily_value)
     year_panels = build_calendar_years(days)
+    yearly_run_stats = yearly_run_stats or {}
     chart_panels = [
-        render_chart_panel(chart_days, index, axis_max, y_tick_values)
+        render_chart_panel(
+            chart_days,
+            index,
+            axis_max,
+            y_tick_values,
+            yearly_run_stats.get(chart_days[0].day.year),
+        )
         for index, chart_days in enumerate(year_panels, start=1)
     ]
     return f"""<!doctype html>
@@ -248,17 +315,17 @@ def render_html(days: list[VolumeDay]) -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Run Graph</title>
+  <title>Running Mileage</title>
   <style>
     :root {{
-      color-scheme: light;
-      --bg: #f7f4ef;
-      --panel: #ffffff;
-      --text: #1d2520;
-      --muted: #647067;
-      --line: #ddd6cc;
-      --bar: #1f8f4d;
-      --bar-strong: #116f38;
+      color-scheme: dark;
+      --bg: #0f1511;
+      --panel: #19201b;
+      --text: #eef4ef;
+      --muted: #9baaa0;
+      --line: #303a33;
+      --bar: #55d45f;
+      --bar-strong: #8ee05d;
     }}
 
     * {{
@@ -280,92 +347,87 @@ def render_html(days: list[VolumeDay]) -> str:
     }}
 
     header {{
-      margin-bottom: 24px;
+      margin-bottom: 36px;
     }}
 
     h1 {{
       margin: 0;
-      font-size: 3.5rem;
-      line-height: 1.05;
-      letter-spacing: 0;
+      font-size: clamp(3.25rem, 7vw, 5.25rem);
+      font-weight: 800;
+      line-height: 0.94;
+      letter-spacing: -0.055em;
     }}
 
-    .lede {{
-      max-width: 760px;
-      margin: 12px 0 0;
-      color: var(--muted);
-      font-size: 1rem;
-    }}
-
-    .legend {{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 14px;
-      margin: 22px 0 20px;
-      color: var(--muted);
-      font-size: 0.9rem;
-    }}
-
-    .legend-item {{
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }}
-
-    .legend-swatch {{
-      width: 18px;
-      height: 10px;
-      border-radius: 999px;
-      background: var(--bar);
+    h1 span {{
+      color: var(--bar-strong);
+      font-style: italic;
     }}
 
     .chart-panel {{
       margin-top: 18px;
     }}
 
+    .chart-panel + .chart-panel {{
+      margin-top: 64px;
+    }}
+
     .chart-heading {{
       display: flex;
       justify-content: space-between;
-      gap: 18px;
+      gap: 28px;
       align-items: end;
-      margin-bottom: 10px;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--bar-strong);
     }}
 
     h2 {{
       margin: 0;
-      font-size: 1.35rem;
-      line-height: 1.1;
-      letter-spacing: 0;
-    }}
-
-    .chart-heading p {{
-      margin: 6px 0 0;
-      color: var(--muted);
-      font-size: 0.9rem;
+      font-size: 2.25rem;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.035em;
     }}
 
     .chart-summary {{
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: end;
-      gap: 8px;
-      color: var(--muted);
-      font-size: 0.9rem;
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(76px, auto);
+      gap: 28px;
+      margin: 0;
     }}
 
-    .chart-summary span {{
-      border: 1px solid var(--line);
-      border-radius: 999px;
-      background: var(--panel);
-      padding: 5px 9px;
+    .chart-summary div {{
+      min-width: 0;
+    }}
+
+    .chart-summary dt {{
+      margin: 0 0 2px;
+      color: #b7c2ba;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }}
+
+    .chart-summary dd {{
+      margin: 0;
+      color: var(--text);
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      white-space: nowrap;
+    }}
+
+    .chart-summary dd span {{
+      color: var(--muted);
+      font-size: 0.76em;
+      font-weight: 600;
     }}
 
     .chart-scroll {{
       overflow-x: auto;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      background: var(--panel);
-      box-shadow: 0 18px 40px rgba(40, 70, 48, 0.08);
     }}
 
     .volume-chart {{
@@ -375,42 +437,46 @@ def render_html(days: list[VolumeDay]) -> str:
     }}
 
     .chart-bg {{
-      fill: var(--panel);
+      fill: transparent;
     }}
 
     .grid-line {{
-      stroke: var(--line);
+      stroke: #354139;
       stroke-width: 1;
-      opacity: 0.75;
+      opacity: 0.9;
     }}
 
     .month-line {{
-      stroke: var(--line);
-      stroke-width: 1;
-      stroke-dasharray: 4 6;
-      opacity: 0.75;
+      stroke: #59665e;
+      stroke-width: 1.25;
+      opacity: 0.82;
     }}
 
     .axis-line {{
-      stroke: #bfb6aa;
+      stroke: #647168;
       stroke-width: 1;
     }}
 
     .axis-label,
-    .month-label,
-    .axis-title {{
+    .month-label {{
       fill: var(--muted);
       font-size: 12px;
     }}
 
+    .axis-unit {{
+      fill: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }}
+
     .daily-bar {{
-      fill: var(--bar);
       opacity: 0.92;
-      transition: fill 120ms ease, opacity 120ms ease;
+      transition: filter 120ms ease, opacity 120ms ease;
     }}
 
     .daily-bar:hover {{
-      fill: var(--bar-strong);
+      filter: saturate(1.15) brightness(0.92);
       opacity: 1;
     }}
 
@@ -428,7 +494,7 @@ def render_html(days: list[VolumeDay]) -> str:
       }}
 
       h1 {{
-        font-size: 2.4rem;
+        font-size: 3rem;
       }}
 
       .chart-heading {{
@@ -436,8 +502,17 @@ def render_html(days: list[VolumeDay]) -> str:
       }}
 
       .chart-summary {{
-        justify-content: start;
-        margin-top: 10px;
+        grid-auto-flow: row;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }}
+    }}
+
+    @media (max-width: 420px) {{
+      .chart-summary {{
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px 24px;
       }}
     }}
   </style>
@@ -445,15 +520,8 @@ def render_html(days: list[VolumeDay]) -> str:
 <body>
   <main>
     <header>
-      <h1>Run Graph</h1>
-      <p class="lede">
-        Daily running distance from the local archive.
-      </p>
+      <h1>Running <span>Mileage</span></h1>
     </header>
-
-    <div class="legend" aria-hidden="true">
-      <span class="legend-item"><span class="legend-swatch"></span>Daily miles</span>
-    </div>
 
     {''.join(chart_panels) if chart_panels else render_svg(days, 1, axis_max, y_tick_values)}
   </main>
@@ -469,8 +537,9 @@ def write_html(path: Path, html: str) -> None:
 
 def main() -> None:
     daily_miles = load_daily_run_miles(ACTIVITIES_DIR)
+    yearly_run_stats = load_yearly_run_stats(ACTIVITIES_DIR)
     days = build_volume_days(daily_miles)
-    write_html(RUNNING_VOLUME_HTML_PATH, render_html(days))
+    write_html(RUNNING_VOLUME_HTML_PATH, render_html(days, yearly_run_stats))
     print(f"Wrote {RUNNING_VOLUME_HTML_PATH}")
 
 
