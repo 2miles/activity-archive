@@ -3,18 +3,23 @@ import { useEffect, useState } from 'react';
 const FEATURED_PATHS = [
   'reports/runs_log.html',
   'reports/running_volume.html',
-  'reports/activity_log.html',
   'heatmaps/running_distance_grid.html',
-  'heatmaps/all_routes_pink_purple.html',
-  'heatmaps/all_routes_original.html',
+  'reports/activity_log.html',
+  'heatmaps/map.html',
+];
+
+const TEXT_EXPORTS = [
+  { path: 'activities.csv', label: 'Activities', format: 'CSV' },
+  { path: 'reports/activity_log.txt', label: 'Activity Log', format: 'TXT' },
+  { path: 'reports/runs_log.txt', label: 'Runs Log', format: 'TXT' },
+  { path: 'reports/runs_log.md', label: 'Runs Log', format: 'Markdown' },
 ];
 
 const FEATURED_LABELS = {
   'reports/runs_log.html': 'Running Log',
   'reports/running_volume.html': 'Running Graph',
   'heatmaps/running_distance_grid.html': 'Running Grid',
-  'heatmaps/all_routes_pink_purple.html': 'Route Heatmap',
-  'heatmaps/all_routes_original.html': 'All Routes Map',
+  'heatmaps/map.html': 'Activity Maps',
 };
 
 const HIDDEN_OUTPUT_PREFIXES = ['maps/', 'thumbnails/'];
@@ -39,6 +44,30 @@ function formatDateTime(value) {
 
 function sortArtifacts(artifacts) {
   return [...artifacts].sort((a, b) => a.label.localeCompare(b.label));
+}
+
+async function copyText(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return;
+    } catch (error) {
+      // Fall through for browsers that expose Clipboard API on an insecure URL.
+    }
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand('copy');
+  textarea.remove();
+  if (!copied) {
+    throw new Error('Clipboard unavailable');
+  }
 }
 
 function buildFeaturedArtifacts(artifacts) {
@@ -68,10 +97,16 @@ function buildFeaturedArtifacts(artifacts) {
     };
   }).filter(Boolean);
   const featuredPaths = new Set(featured.map((artifact) => artifact.path));
+  const exportPaths = new Set(TEXT_EXPORTS.map((item) => item.path));
+  const exports = TEXT_EXPORTS.map((item) => {
+    const artifact = byPath.get(item.path);
+    return artifact ? { ...artifact, ...item } : null;
+  }).filter(Boolean);
   const remaining = visibleArtifacts.filter(
-    (artifact) => !featuredPaths.has(artifact.path),
+    (artifact) =>
+      !featuredPaths.has(artifact.path) && !exportPaths.has(artifact.path),
   );
-  return { featured, remaining };
+  return { featured, exports, remaining };
 }
 
 const RunningLogPreview = () => {
@@ -212,8 +247,6 @@ const RoutesPreview = ({ variant = 'original' }) => {
   return (
     <svg className="artifact-preview route-preview" viewBox="0 0 132 84" aria-hidden="true">
       <rect className="preview-surface" x="1" y="1" width="130" height="82" rx="12" />
-      <path d="M0 57 L132 18" stroke="#dce8dc" strokeWidth="1" opacity="0.8" />
-      <path d="M0 27 L132 66" stroke="#dce8dc" strokeWidth="1" opacity="0.65" />
       {routes.map((route) =>
         isGlow ? (
           <g key={route}>
@@ -224,6 +257,19 @@ const RoutesPreview = ({ variant = 'original' }) => {
           <path key={route} d={route} fill="none" stroke="#FF006E" strokeWidth="1.5" strokeLinecap="round" opacity="1" />
         ),
       )}
+    </svg>
+  );
+};
+
+const TextExportsPreview = () => {
+  return (
+    <svg className="artifact-preview" viewBox="0 0 132 84" aria-hidden="true">
+      <rect className="preview-surface" x="1" y="1" width="130" height="82" rx="12" />
+      <path d="M37 17h48l12 12v40H37z" fill="none" stroke="#657168" strokeWidth="1.5" />
+      <path d="M85 17v12h12" fill="none" stroke="#657168" strokeWidth="1.5" />
+      <rect x="47" y="37" width="38" height="3" rx="1.5" fill="#eef4ef" />
+      <rect x="47" y="47" width="30" height="3" rx="1.5" fill="#b7c2ba" />
+      <rect x="47" y="57" width="35" height="3" rx="1.5" fill="#b7c2ba" />
     </svg>
   );
 };
@@ -241,11 +287,8 @@ const ArtifactPreview = ({ path }) => {
   if (path === 'heatmaps/running_distance_grid.html') {
     return <CalendarPreview />;
   }
-  if (path === 'heatmaps/all_routes_pink_purple.html') {
+  if (path === 'heatmaps/map.html') {
     return <RoutesPreview variant="glow" />;
-  }
-  if (path === 'heatmaps/all_routes_original.html') {
-    return <RoutesPreview />;
   }
 
   return null;
@@ -265,6 +308,44 @@ const ArtifactCard = ({ artifact }) => {
   );
 };
 
+const TextExportsCard = ({ expanded, onToggle }) => (
+  <button
+    className="artifact-card text-exports-card"
+    type="button"
+    aria-expanded={expanded}
+    aria-controls="text-exports-panel"
+    onClick={onToggle}
+  >
+    <div className="text-exports-title">
+      <h3>Text Exports</h3>
+      <span>
+        {expanded ? 'Hide files' : 'Show files'}
+        <i aria-hidden="true">⌄</i>
+      </span>
+    </div>
+    <TextExportsPreview />
+  </button>
+);
+
+const TextExportsPanel = ({ artifacts, copyStatus, onCopy }) => (
+  <div className="text-exports-panel" id="text-exports-panel">
+    {artifacts.map((artifact) => (
+      <div className="text-export-row" key={artifact.path}>
+        <div>
+          <strong>{artifact.label}</strong>
+          <span>{artifact.format}</span>
+        </div>
+        <div className="text-export-actions">
+          <button type="button" onClick={() => onCopy(artifact)}>
+            {copyStatus[artifact.path] || 'Copy'}
+          </button>
+          <a href={artifact.url} target="_blank" rel="noreferrer">Open</a>
+        </div>
+      </div>
+    ))}
+  </div>
+);
+
 const App = () => {
   const [health, setHealth] = useState('loading');
   const [syncStatus, setSyncStatus] = useState(null);
@@ -272,6 +353,8 @@ const App = () => {
   const [syncMessage, setSyncMessage] = useState('');
   const [syncSubmitting, setSyncSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [exportsOpen, setExportsOpen] = useState(false);
+  const [copyStatus, setCopyStatus] = useState({});
 
   useEffect(() => {
     let cancelled = false;
@@ -350,7 +433,24 @@ const App = () => {
     }
   }
 
-  const { featured, remaining } = buildFeaturedArtifacts(artifacts);
+  async function handleCopyExport(artifact) {
+    setCopyStatus((current) => ({ ...current, [artifact.path]: 'Copying…' }));
+    try {
+      const response = await fetch(artifact.url);
+      if (!response.ok) {
+        throw new Error('Could not load export');
+      }
+      await copyText(await response.text());
+      setCopyStatus((current) => ({ ...current, [artifact.path]: 'Copied' }));
+      window.setTimeout(() => {
+        setCopyStatus((current) => ({ ...current, [artifact.path]: 'Copy' }));
+      }, 1600);
+    } catch (error) {
+      setCopyStatus((current) => ({ ...current, [artifact.path]: 'Failed' }));
+    }
+  }
+
+  const { featured, exports, remaining } = buildFeaturedArtifacts(artifacts);
   const syncState = syncStatus?.running ? 'running' : syncStatus?.state;
   const syncStateLabel = syncStatus
     ? syncStatus.running
@@ -406,25 +506,38 @@ const App = () => {
           {featured.map((artifact) => (
             <ArtifactCard key={artifact.path} artifact={artifact} />
           ))}
+          <TextExportsCard
+            expanded={exportsOpen}
+            onToggle={() => setExportsOpen((open) => !open)}
+          />
         </div>
+        {exportsOpen ? (
+          <TextExportsPanel
+            artifacts={exports}
+            copyStatus={copyStatus}
+            onCopy={handleCopyExport}
+          />
+        ) : null}
       </section>
 
-      <section className="artifact-section" aria-label="Additional outputs">
-        <div className="artifact-list">
-          {remaining.map((artifact) => (
-            <a
-              key={artifact.path}
-              className="artifact-row"
-              href={artifact.url}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <span>{artifact.label}</span>
-              <span>{artifact.kind}</span>
-            </a>
-          ))}
-        </div>
-      </section>
+      {remaining.length ? (
+        <section className="artifact-section" aria-label="Additional outputs">
+          <div className="artifact-list">
+            {remaining.map((artifact) => (
+              <a
+                key={artifact.path}
+                className="artifact-row"
+                href={artifact.url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <span>{artifact.label}</span>
+                <span>{artifact.kind}</span>
+              </a>
+            ))}
+          </div>
+        </section>
+      ) : null}
     </main>
   );
 };
