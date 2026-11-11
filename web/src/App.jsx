@@ -108,6 +108,30 @@ const ListPreview = ({ variant = 'run' }) => {
   );
 };
 
+const RunningLogPreview = () => {
+  const rows = [29, 42, 55, 68];
+
+  return (
+    <svg className="artifact-preview" viewBox="0 0 132 84" aria-hidden="true">
+      <rect className="preview-surface" x="1" y="1" width="130" height="82" rx="12" />
+      <line x1="10" y1="12" x2="122" y2="12" stroke="#8ee05d" strokeWidth="1" />
+      <rect x="10" y="19" width="9" height="2" rx="1" fill="#b7c2ba" />
+      <rect x="53" y="19" width="10" height="2" rx="1" fill="#b7c2ba" />
+      <rect x="84" y="19" width="9" height="2" rx="1" fill="#b7c2ba" />
+      <rect x="110" y="19" width="10" height="2" rx="1" fill="#b7c2ba" />
+      {rows.map((y, index) => (
+        <g key={y}>
+          <line x1="10" y1={y + 5} x2="122" y2={y + 5} stroke="#303a33" strokeWidth="1" />
+          <rect x="10" y={y} width={15 + index * 2} height="2.5" rx="1" fill="#eef4ef" />
+          <rect x="54" y={y} width="8" height="2.5" rx="1" fill="#eef4ef" />
+          <rect x="83" y={y} width="13" height="2.5" rx="1" fill="#eef4ef" />
+          <rect x="109" y={y} width="11" height="2.5" rx="1" fill="#eef4ef" />
+        </g>
+      ))}
+    </svg>
+  );
+};
+
 const CalendarPreview = () => {
   const fills = [
     '#e9f7ec',
@@ -141,22 +165,33 @@ const CalendarPreview = () => {
 };
 
 const VolumePreview = () => {
-  const bars = [10, 24, 14, 36, 20, 42, 26, 58, 31, 47, 22, 54, 38, 28];
+  const bars = [10, 24, 15, 36, 20, 46, 27, 55, 32, 49, 23, 52, 39, 28];
 
   return (
     <svg className="artifact-preview" viewBox="0 0 132 84" aria-hidden="true">
+      <defs>
+        <linearGradient id="volume-preview-gradient" x1="0" y1="74" x2="0" y2="16" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#08713a" />
+          <stop offset="50%" stopColor="#55d45f" />
+          <stop offset="100%" stopColor="#f2dc3f" />
+        </linearGradient>
+      </defs>
       <rect className="preview-surface" x="1" y="1" width="130" height="82" rx="12" />
-      <line x1="12" y1="68" x2="120" y2="68" stroke="#d8ded6" strokeWidth="1" />
+      <line x1="10" y1="12" x2="122" y2="12" stroke="#8ee05d" strokeWidth="1" />
+      {[22, 39, 56, 74].map((y) => (
+        <line key={y} x1="14" y1={y} x2="122" y2={y} stroke="#354139" strokeWidth="1" />
+      ))}
+      {[41, 68, 95].map((x) => (
+        <line key={x} x1={x} y1="16" x2={x} y2="74" stroke="#59665e" strokeWidth="1" opacity="0.82" />
+      ))}
       {bars.map((height, index) => (
         <rect
           key={index}
-          x={13 + index * 8}
-          y={68 - height}
-          width="4"
+          x={16 + index * 7.4}
+          y={74 - height}
+          width="3"
           height={height}
-          rx="1.5"
-          fill="#71c98b"
-          opacity="0.75"
+          fill="url(#volume-preview-gradient)"
         />
       ))}
     </svg>
@@ -199,7 +234,7 @@ const RoutesPreview = ({ variant = 'original' }) => {
 
 const ArtifactPreview = ({ path }) => {
   if (path === 'reports/runs_log.html') {
-    return <ListPreview />;
+    return <RunningLogPreview />;
   }
   if (path === 'reports/running_volume.html') {
     return <VolumePreview />;
@@ -231,16 +266,6 @@ const ArtifactCard = ({ artifact }) => {
       <h3>{artifact.label}</h3>
       <ArtifactPreview path={artifact.path} />
     </a>
-  );
-};
-
-const StatusPill = ({ state, running }) => {
-  const tone = running ? 'running' : state;
-
-  return (
-    <span className={`status-pill ${tone}`}>
-      {running ? 'Running' : state.charAt(0).toUpperCase() + state.slice(1)}
-    </span>
   );
 };
 
@@ -330,31 +355,36 @@ const App = () => {
   }
 
   const { featured, remaining } = buildFeaturedArtifacts(artifacts);
+  const syncState = syncStatus?.running ? 'running' : syncStatus?.state;
+  const syncStateLabel = syncStatus
+    ? syncStatus.running
+      ? 'Running'
+      : syncStatus.state.charAt(0).toUpperCase() + syncStatus.state.slice(1)
+    : 'Loading';
 
   return (
     <main className="page-shell">
       <section className="hero-panel">
         <div className="hero-copy">
-          <span className="eyebrow">Activity Archive</span>
-          <h1>Activity Archive Dashboard</h1>
-          <p>
-            Sync new Strava activity data into your local archive, then view
-            custom heatmaps, data grids, route maps, and run logs.
-          </p>
+          <h1>Activity <span>Archive</span></h1>
         </div>
 
         <div className="sync-panel">
-          <div className="sync-topline">
-            <div>
-              <span className="label">Backend</span>
-              <strong>{health === 'ok' ? 'Connected' : 'Unavailable'}</strong>
-            </div>
-            {syncStatus ? (
-              <StatusPill
-                state={syncStatus.state}
-                running={syncStatus.running}
-              />
-            ) : null}
+          <div className="sync-stat">
+            <span className="label">Connection</span>
+            <strong>{health === 'ok' ? 'Connected' : 'Unavailable'}</strong>
+          </div>
+
+          <div className="sync-stat">
+            <span className="label">Status</span>
+            <strong className={`sync-state ${syncState || ''}`}>
+              {syncStateLabel}
+            </strong>
+          </div>
+
+          <div className="sync-stat">
+            <span className="label">Last sync</span>
+            <strong>{formatDateTime(syncStatus?.last_success_at)}</strong>
           </div>
 
           <button
@@ -370,42 +400,12 @@ const App = () => {
                 : 'Run Sync'}
           </button>
 
-          <dl className="status-grid">
-            <div>
-              <dt>Last started</dt>
-              <dd>{formatDateTime(syncStatus?.last_started_at)}</dd>
-            </div>
-            <div>
-              <dt>Last finished</dt>
-              <dd>{formatDateTime(syncStatus?.last_finished_at)}</dd>
-            </div>
-            <div>
-              <dt>Last success</dt>
-              <dd>{formatDateTime(syncStatus?.last_success_at)}</dd>
-            </div>
-            <div>
-              <dt>Last error</dt>
-              <dd>{syncStatus?.last_error || 'None'}</dd>
-            </div>
-          </dl>
-
           {syncMessage ? <p className="notice success">{syncMessage}</p> : null}
           {errorMessage ? <p className="notice error">{errorMessage}</p> : null}
         </div>
       </section>
 
-      <section className="content-section">
-        <div className="section-heading">
-          <div>
-            <span className="eyebrow">Open</span>
-            <h2>Maps and Logs</h2>
-          </div>
-          <p>
-            Quick links to the views you use most: run logs, activity logs,
-            heatmaps, and route maps.
-          </p>
-        </div>
-
+      <section className="artifact-section" aria-label="Featured outputs">
         <div className="artifact-grid">
           {featured.map((artifact) => (
             <ArtifactCard key={artifact.path} artifact={artifact} />
@@ -413,15 +413,7 @@ const App = () => {
         </div>
       </section>
 
-      <section className="content-section secondary">
-        <div className="section-heading">
-          <div>
-            <span className="eyebrow">Files</span>
-            <h2>More Outputs</h2>
-          </div>
-          <p>Additional generated files from the local archive.</p>
-        </div>
-
+      <section className="artifact-section" aria-label="Additional outputs">
         <div className="artifact-list">
           {remaining.map((artifact) => (
             <a
