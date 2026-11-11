@@ -6,17 +6,60 @@ from typing import Any
 
 import folium
 import polyline
+from branca.element import MacroElement, Template
 
 from activity_archive.paths import ACTIVITIES_DIR, HEATMAPS_DIR
 
 PORTLAND_CENTER = [45.5231, -122.6765]
 DEFAULT_ZOOM = 10
-TILES = "CartoDB positron"
+OPENFREEMAP_DARK_STYLE = "https://tiles.openfreemap.org/styles/dark"
+
+
+class OpenFreeMapDark(MacroElement):
+    """Add OpenFreeMap's dark vector basemap to a Folium/Leaflet map."""
+
+    _template = Template(
+        """
+        {% macro header(this, kwargs) %}
+        <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.3.0/dist/maplibre-gl.css">
+        <script type="importmap">
+        {
+          "imports": {
+            "leaflet": "https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js",
+            "maplibre-gl": "https://unpkg.com/maplibre-gl@6.3.0/dist/maplibre-gl.mjs"
+          }
+        }
+        </script>
+        {% endmacro %}
+
+        {% macro html(this, kwargs) %}
+        <script type="module">
+          import { maplibreGL } from "https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/dist/leaflet-maplibre-gl.mjs";
+
+          maplibreGL({
+            style: {{ this.style_url | tojson }}
+          }).addTo({{ this._parent.get_name() }});
+
+          {{ this._parent.get_name() }}.attributionControl.addAttribution(
+            '<a href="https://openfreemap.org/">OpenFreeMap</a> | ' +
+            '<a href="https://www.openmaptiles.org/">&copy; OpenMapTiles</a> ' +
+            'Data from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          );
+        </script>
+        {% endmacro %}
+        """
+    )
+
+    def __init__(self, style_url: str = OPENFREEMAP_DARK_STYLE) -> None:
+        super().__init__()
+        self._name = "OpenFreeMapDark"
+        self.style_url = style_url
 
 
 ENABLED_HEATMAPS = [
     "original",
     "pink_purple",
+    "light",
 ]
 
 
@@ -25,30 +68,26 @@ HEATMAP_STYLES = [
         "name": "original",
         "output": "all_routes_original.html",
         "layers": [
-            {"weight": 1.5, "opacity": 100, "color": "#FF006E"},
+            {"weight": 1.5, "opacity": 1.0, "color": "#FF006E"},
         ],
     },
     {
         "name": "pink_purple",
         "output": "all_routes_pink_purple.html",
         "layers": [
-            {"weight": 1.5, "opacity": 0.66, "color": "#FF006E"},
+            # A broad, low-opacity warm-white halo becomes brighter where
+            # routes overlap, while the pink core stays crisp above it.
+            {"weight": 8, "opacity": 0.070, "color": "#F4F7F0"},
+            {"weight": 1.5, "opacity": 0.72, "color": "#FF006E"},
+        ],
+    },
+    {
+        "name": "light",
+        "output": "route_explorer.html",
+        "basemap": "light",
+        "layers": [
             {"weight": 6, "opacity": 0.10, "color": "#33006E"},
-        ],
-    },
-    {
-        "name": "glow",
-        "output": "all_routes_glow.html",
-        "layers": [
-            {"weight": 10, "opacity": 0.05, "color": "#33006E"},
-            {"weight": 2, "opacity": 0.35, "color": "#FF006E"},
-        ],
-    },
-    {
-        "name": "dark",
-        "output": "all_routes_dark.html",
-        "layers": [
-            {"weight": 2, "opacity": 0.12, "color": "#111111"},
+            {"weight": 1.5, "opacity": 0.66, "color": "#FF006E"},
         ],
     },
 ]
@@ -112,12 +151,15 @@ def load_all_routes() -> tuple[list[list[tuple[float, float]]], int]:
     return routes, total_files
 
 
-def build_map() -> folium.Map:
-    return folium.Map(
+def build_map(basemap: str = "dark") -> folium.Map:
+    m = folium.Map(
         location=PORTLAND_CENTER,
         zoom_start=DEFAULT_ZOOM,
-        tiles=TILES,
+        tiles="OpenStreetMap" if basemap == "light" else None,
     )
+    if basemap == "dark":
+        OpenFreeMapDark().add_to(m)
+    return m
 
 
 def add_styled_route(
@@ -134,10 +176,11 @@ def add_styled_route(
 
 
 def render_style(style: dict[str, Any], routes: list[list[tuple[float, float]]]) -> Path:
-    m = build_map()
+    m = build_map(style.get("basemap", "dark"))
 
-    for coords in routes:
-        for layer in style["layers"]:
+    # Render complete layers in order so every halo remains below every core.
+    for layer in style["layers"]:
+        for coords in routes:
             add_styled_route(m, coords, layer)
 
     HEATMAPS_DIR.mkdir(parents=True, exist_ok=True)
