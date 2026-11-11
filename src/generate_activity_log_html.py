@@ -36,6 +36,16 @@ TYPE_CLASSES = {
     "VirtualRide": "type-ride",
 }
 
+TYPE_LABELS = {
+    "Run": ("run", "runs"),
+    "TrailRun": ("trail run", "trail runs"),
+    "VirtualRun": ("virtual run", "virtual runs"),
+    "Walk": ("walk", "walks"),
+    "Hike": ("hike", "hikes"),
+    "Ride": ("ride", "rides"),
+    "VirtualRide": ("virtual ride", "virtual rides"),
+}
+
 
 @dataclass(frozen=True)
 class ActivityRow:
@@ -76,24 +86,19 @@ def type_class(type_name: str) -> str:
     return TYPE_CLASSES.get(type_name, "type-other")
 
 
-def pluralize(count: int, singular: str, plural: str | None = None) -> str:
-    word = singular if count == 1 else plural or f"{singular}s"
-    return f"{count} {word}"
-
-
-def render_summary_card(label: str, value: str) -> str:
-    return f"""
-      <div class="summary-card">
-        <span>{escape(label)}</span>
-        <strong>{escape(value)}</strong>
-      </div>"""
+def type_total_label(type_name: str, count: int) -> str:
+    singular, plural = TYPE_LABELS.get(
+        type_name,
+        (type_name.lower(), f"{type_name.lower()}s"),
+    )
+    return f"{count} {singular if count == 1 else plural}"
 
 
 def render_type_totals(counter: Counter[str]) -> str:
     return "".join(
         f"""
-          <span class="type-chip {escape(type_class(type_name))}">
-            {escape(type_name)} {count}
+          <span class="type-total {escape(type_class(type_name))}">
+            {escape(type_total_label(type_name, count))}
           </span>"""
         for type_name, count in sorted(counter.items(), key=lambda item: (-item[1], item[0]))
     )
@@ -121,24 +126,24 @@ def render_month_section(year: int, month: int, activities: list[ActivityRow]) -
                 </span>
               </td>
               <td>{row.dist_mi:.2f}</td>
-              <td>{row.moving_minutes}</td>
+              <td>{row.moving_minutes} min</td>
             </tr>"""
         )
 
     return f"""
     <section class="month-section">
       <div class="month-heading">
-        <div>
+        <div class="month-title">
           <h2>{escape(month_name)}</h2>
           <div class="type-totals">
             {render_type_totals(type_counts)}
           </div>
         </div>
-        <div class="month-summary">
-          <span>{pluralize(len(month_activities), "activity", "activities")}</span>
-          <span>{total_miles:.2f} miles</span>
-          <span>{total_minutes} min</span>
-        </div>
+        <dl class="month-summary">
+          <div><dt>Activities</dt><dd>{len(month_activities)}</dd></div>
+          <div><dt>Distance</dt><dd>{total_miles:.2f} <span>mi</span></dd></div>
+          <div><dt>Time</dt><dd>{total_minutes} <span>min</span></dd></div>
+        </dl>
       </div>
       <div class="table-wrap">
         <table>
@@ -147,7 +152,7 @@ def render_month_section(year: int, month: int, activities: list[ActivityRow]) -
               <th>Day</th>
               <th>Type</th>
               <th>Miles</th>
-              <th>Minutes</th>
+              <th>Time</th>
             </tr>
           </thead>
           <tbody>
@@ -160,10 +165,6 @@ def render_month_section(year: int, month: int, activities: list[ActivityRow]) -
 
 def render_html(activities_by_month: dict[tuple[int, int], list[ActivityRow]]) -> str:
     month_keys = sorted(activities_by_month.keys(), reverse=True)
-    all_rows = [row for rows in activities_by_month.values() for row in rows]
-    type_counts = Counter(row.type_name for row in all_rows)
-    total_miles = sum(row.dist_mi for row in all_rows)
-    total_minutes = sum(row.moving_minutes for row in all_rows)
 
     month_sections = [
         render_month_section(year, month, activities_by_month[(year, month)])
@@ -178,23 +179,18 @@ def render_html(activities_by_month: dict[tuple[int, int], list[ActivityRow]]) -
   <title>Activity Log</title>
   <style>
     :root {{
-      color-scheme: light;
-      --bg: #f7f4ef;
-      --panel: #ffffff;
-      --text: #1d2520;
-      --muted: #647067;
-      --line: #ddd6cc;
-      --accent-soft: #d9f0ec;
-      --run-bg: #dbeafe;
-      --run-text: #1d4ed8;
-      --walk-bg: #dcfce7;
-      --walk-text: #166534;
-      --hike-bg: #fef3c7;
-      --hike-text: #92400e;
-      --ride-bg: #fee2e2;
-      --ride-text: #b91c1c;
-      --other-bg: #e5e7eb;
-      --other-text: #374151;
+      color-scheme: dark;
+      --bg: #0f1511;
+      --text: #eef4ef;
+      --muted: #9baaa0;
+      --label: #b7c2ba;
+      --line: #303a33;
+      --accent: #8ee05d;
+      --run: #62b0ff;
+      --walk: #72df91;
+      --hike: #f2c94c;
+      --ride: #ff8b7b;
+      --other: #b7c2ba;
     }}
 
     * {{
@@ -210,148 +206,135 @@ def render_html(activities_by_month: dict[tuple[int, int], list[ActivityRow]]) -
     }}
 
     main {{
-      width: min(100%, 980px);
+      width: min(100%, 1180px);
       margin: 0 auto;
       padding: 28px 18px 48px;
     }}
 
     header {{
-      margin-bottom: 24px;
+      margin-bottom: 36px;
     }}
 
-    h1, h2 {{
+    h1,
+    h2 {{
       margin: 0;
-      line-height: 1.1;
-      letter-spacing: 0;
     }}
 
     h1 {{
-      font-size: 3.5rem;
+      font-size: clamp(3.25rem, 7vw, 5.25rem);
+      font-weight: 800;
+      line-height: 0.94;
+      letter-spacing: -0.055em;
+    }}
+
+    h1 span {{
+      color: var(--accent);
+      font-style: italic;
     }}
 
     h2 {{
-      font-size: 1.35rem;
-    }}
-
-    .lede {{
-      max-width: 680px;
-      margin: 12px 0 0;
-      color: var(--muted);
-      font-size: 1rem;
-    }}
-
-    .summary-grid {{
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-      gap: 10px;
-      margin-top: 22px;
-    }}
-
-    .summary-card {{
-      min-width: 0;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--panel);
-      padding: 14px;
-    }}
-
-    .summary-card span {{
-      display: block;
-      color: var(--muted);
-      font-size: 0.78rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }}
-
-    .summary-card strong {{
-      display: block;
-      margin-top: 6px;
-      font-size: 1.35rem;
-      line-height: 1.1;
+      font-size: 2.25rem;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.035em;
     }}
 
     .month-section {{
-      margin-top: 14px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--panel);
-      overflow: hidden;
+      margin-top: 18px;
+    }}
+
+    .month-section + .month-section {{
+      margin-top: 64px;
     }}
 
     .month-heading {{
       display: flex;
       align-items: flex-end;
       justify-content: space-between;
-      gap: 16px;
-      padding: 16px;
-      border-bottom: 1px solid var(--line);
-    }}
-
-    .month-summary,
-    .type-totals {{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      font-size: 0.9rem;
+      gap: 28px;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--accent);
     }}
 
     .month-summary {{
-      justify-content: flex-end;
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(84px, auto);
+      gap: 28px;
+      margin: 0;
+    }}
+
+    .month-summary div {{
+      min-width: 0;
+    }}
+
+    .month-summary dt {{
+      margin: 0 0 2px;
+      color: var(--label);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      line-height: 1.2;
+    }}
+
+    .month-summary dd {{
+      margin: 0;
+      color: var(--text);
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      white-space: nowrap;
+    }}
+
+    .month-summary dd span {{
       color: var(--muted);
+      font-size: 0.76em;
+      font-weight: 600;
     }}
 
     .type-totals {{
-      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px 12px;
+      margin-top: 9px;
     }}
 
-    .month-summary span,
-    .type-chip,
-    .type-badge {{
-      border-radius: 999px;
-      padding: 4px 9px;
-      font-weight: 700;
-    }}
-
-    .month-summary span {{
-      background: var(--accent-soft);
-      color: #164e47;
-      font-weight: 500;
-    }}
-
+    .type-total,
     .type-badge {{
       display: inline-flex;
-      min-width: 66px;
-      justify-content: center;
-      font-size: 0.84rem;
+      color: var(--other);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
     }}
 
-    .type-chip {{
-      font-size: 0.78rem;
+    .type-badge {{
+      min-width: 72px;
+      font-size: 0.8rem;
+      letter-spacing: 0.02em;
     }}
 
     .type-run {{
-      background: var(--run-bg);
-      color: var(--run-text);
+      color: var(--run);
     }}
 
     .type-walk {{
-      background: var(--walk-bg);
-      color: var(--walk-text);
+      color: var(--walk);
     }}
 
     .type-hike {{
-      background: var(--hike-bg);
-      color: var(--hike-text);
+      color: var(--hike);
     }}
 
     .type-ride {{
-      background: var(--ride-bg);
-      color: var(--ride-text);
+      color: var(--ride);
     }}
 
     .type-other {{
-      background: var(--other-bg);
-      color: var(--other-text);
+      color: var(--other);
     }}
 
     .table-wrap {{
@@ -364,8 +347,9 @@ def render_html(activities_by_month: dict[tuple[int, int], list[ActivityRow]]) -
       font-variant-numeric: tabular-nums;
     }}
 
-    th, td {{
-      padding: 11px 16px;
+    th,
+    td {{
+      padding: 13px 12px;
       border-bottom: 1px solid var(--line);
       text-align: right;
       white-space: nowrap;
@@ -379,15 +363,19 @@ def render_html(activities_by_month: dict[tuple[int, int], list[ActivityRow]]) -
     }}
 
     th {{
-      color: var(--muted);
-      font-size: 0.78rem;
+      color: var(--label);
+      font-size: 0.72rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.08em;
     }}
 
     tr:last-child td {{
-      border-bottom: 0;
+      border-bottom-color: transparent;
+    }}
+
+    tbody tr:hover {{
+      background: rgba(142, 224, 93, 0.045);
     }}
 
     @media (max-width: 720px) {{
@@ -396,36 +384,31 @@ def render_html(activities_by_month: dict[tuple[int, int], list[ActivityRow]]) -
       }}
 
       h1 {{
-        font-size: 2.2rem;
+        font-size: 3rem;
       }}
 
       .month-heading {{
-        align-items: flex-start;
-        flex-direction: column;
+        display: block;
       }}
 
       .month-summary {{
-        justify-content: flex-start;
+        grid-auto-flow: row;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 16px;
       }}
 
       th, td {{
         padding: 10px 12px;
       }}
     }}
+
   </style>
 </head>
 <body>
   <main>
     <header>
-      <h1>Activity Log</h1>
-      <p class="lede">A monthly view of archived activities, generated from local Activity Archive JSON.</p>
-      <div class="summary-grid">
-        {render_summary_card("Months", str(len(month_keys)))}
-        {render_summary_card("Activities", str(len(all_rows)))}
-        {render_summary_card("Miles", f"{total_miles:.2f}")}
-        {render_summary_card("Minutes", str(total_minutes))}
-        {render_summary_card("Types", str(len(type_counts)))}
-      </div>
+      <h1>Activity <span>Log</span></h1>
     </header>
     {''.join(month_sections)}
   </main>

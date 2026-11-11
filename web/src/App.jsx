@@ -74,40 +74,6 @@ function buildFeaturedArtifacts(artifacts) {
   return { featured, remaining };
 }
 
-const ListPreview = ({ variant = 'run' }) => {
-  const rows =
-    variant === 'activity'
-      ? [
-          ['#cfeee0', '#164e47', '#dff4e8'],
-          ['#f0e1ff', '#5a3180', '#f7edff'],
-          ['#d9e9ff', '#214f82', '#edf5ff'],
-          ['#ffe3cc', '#7b4217', '#fff0e3'],
-        ]
-      : [
-          ['#d8f3dc', '#164e47', '#edf8ef'],
-          ['#cfeee0', '#164e47', '#f1faf3'],
-          ['#bfe6d0', '#164e47', '#e8f6ed'],
-          ['#d8f3dc', '#164e47', '#f5fbf6'],
-        ];
-
-  return (
-    <svg className="artifact-preview" viewBox="0 0 132 84" aria-hidden="true">
-      <rect className="preview-surface" x="1" y="1" width="130" height="82" rx="12" />
-      {rows.map(([chip, line, fill], index) => {
-        const y = 13 + index * 17;
-        return (
-          <g key={`${variant}-${index}`}>
-            <rect x="12" y={y - 4} width="108" height="12" rx="6" fill={fill} />
-            <circle cx="20" cy={y + 2} r="3.5" fill={chip} />
-            <rect x="30" y={y - 1} width={index % 2 === 0 ? 56 : 42} height="2.5" rx="1.25" fill={line} opacity="0.8" />
-            <rect x="94" y={y - 1} width="16" height="2.5" rx="1.25" fill={line} opacity="0.35" />
-          </g>
-        );
-      })}
-    </svg>
-  );
-};
-
 const RunningLogPreview = () => {
   const rows = [29, 42, 55, 68];
 
@@ -126,6 +92,35 @@ const RunningLogPreview = () => {
           <rect x="54" y={y} width="8" height="2.5" rx="1" fill="#eef4ef" />
           <rect x="83" y={y} width="13" height="2.5" rx="1" fill="#eef4ef" />
           <rect x="109" y={y} width="11" height="2.5" rx="1" fill="#eef4ef" />
+        </g>
+      ))}
+    </svg>
+  );
+};
+
+const ActivityLogPreview = () => {
+  const rows = [
+    [29, '#72df91'],
+    [42, '#62b0ff'],
+    [55, '#ff8b7b'],
+    [68, '#f2c94c'],
+  ];
+
+  return (
+    <svg className="artifact-preview" viewBox="0 0 132 84" aria-hidden="true">
+      <rect className="preview-surface" x="1" y="1" width="130" height="82" rx="12" />
+      <line x1="10" y1="12" x2="122" y2="12" stroke="#8ee05d" strokeWidth="1" />
+      <rect x="10" y="19" width="9" height="2" rx="1" fill="#b7c2ba" />
+      <rect x="42" y="19" width="9" height="2" rx="1" fill="#b7c2ba" />
+      <rect x="82" y="19" width="10" height="2" rx="1" fill="#b7c2ba" />
+      <rect x="109" y="19" width="11" height="2" rx="1" fill="#b7c2ba" />
+      {rows.map(([y, typeColor], index) => (
+        <g key={y}>
+          <line x1="10" y1={y + 5} x2="122" y2={y + 5} stroke="#303a33" strokeWidth="1" />
+          <rect x="10" y={y} width={14 + index * 2} height="2.5" rx="1" fill="#eef4ef" />
+          <rect x="42" y={y} width="17" height="2.5" rx="1" fill={typeColor} />
+          <rect x="83" y={y} width="8" height="2.5" rx="1" fill="#eef4ef" />
+          <rect x="108" y={y} width="12" height="2.5" rx="1" fill="#eef4ef" />
         </g>
       ))}
     </svg>
@@ -240,7 +235,7 @@ const ArtifactPreview = ({ path }) => {
     return <VolumePreview />;
   }
   if (path === 'reports/activity_log.html') {
-    return <ListPreview variant="activity" />;
+    return <ActivityLogPreview />;
   }
   if (path === 'heatmaps/running_distance_grid.html') {
     return <CalendarPreview />;
