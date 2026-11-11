@@ -26,11 +26,12 @@ from activity_archive.units import meters_to_miles, safe_float
 
 
 LEVEL_COLORS = [
-    "#ebedf0",
-    "#9be9a8",
-    "#40c463",
-    "#30a14e",
-    "#216e39",
+    "#1c2720",
+    "#08713a",
+    "#15964a",
+    "#55d45f",
+    "#bde64b",
+    "#f2dc3f",
 ]
 
 
@@ -82,13 +83,15 @@ def level_for_miles(miles: float, max_day_miles: float) -> int:
         return 0
 
     ratio = miles / max_day_miles
-    if ratio <= 0.25:
+    if ratio <= 0.20:
         return 1
-    if ratio <= 0.50:
+    if ratio <= 0.40:
         return 2
-    if ratio <= 0.75:
+    if ratio <= 0.60:
         return 3
-    return 4
+    if ratio <= 0.80:
+        return 4
+    return 5
 
 
 def summarize_year(year: int, daily_miles: dict[date, float]) -> YearSummary:
@@ -151,11 +154,11 @@ def render_year_grid(year: int, daily_miles: dict[date, float]) -> str:
     return f"""
 <section class="year-card">
   <header class="year-header">
-    <div>
-      <h2>{summary.year}</h2>
-      <p>{summary.total_miles:.1f} miles across {summary.run_days} run days</p>
-    </div>
-    <div class="max-day">Longest day: {summary.max_day_miles:.1f} mi</div>
+    <h2>{summary.year}</h2>
+    <dl class="year-summary">
+      <div><dt>Distance</dt><dd>{summary.total_miles:.1f} <span>mi</span></dd></div>
+      <div><dt>Run days</dt><dd>{summary.run_days}</dd></div>
+    </dl>
   </header>
   <div class="grid-wrap">
     <div class="weekday-labels" aria-hidden="true">
@@ -177,8 +180,6 @@ def render_year_grid(year: int, daily_miles: dict[date, float]) -> str:
 
 def render_html(daily_miles: dict[date, float]) -> str:
     years = sorted({day.year for day in daily_miles}, reverse=True)
-    total_miles = sum(daily_miles.values())
-    total_run_days = sum(1 for miles in daily_miles.values() if miles > 0)
 
     if years:
         body = "\n".join(render_year_grid(year, daily_miles) for year in years)
@@ -190,21 +191,22 @@ def render_html(daily_miles: dict[date, float]) -> str:
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Running Distance Grid</title>
+  <title>Running Grid</title>
   <style>
     :root {{
-      color-scheme: light;
-      --bg: #f6f8f2;
-      --card: #ffffff;
-      --ink: #172312;
-      --muted: #65705f;
-      --border: #dfe7d8;
-      --shadow: 0 18px 50px rgba(28, 58, 27, 0.10);
+      color-scheme: dark;
+      --bg: #0f1511;
+      --text: #eef4ef;
+      --muted: #9baaa0;
+      --label: #b7c2ba;
+      --line: #303a33;
+      --accent: #8ee05d;
       --level-0: {LEVEL_COLORS[0]};
       --level-1: {LEVEL_COLORS[1]};
       --level-2: {LEVEL_COLORS[2]};
       --level-3: {LEVEL_COLORS[3]};
       --level-4: {LEVEL_COLORS[4]};
+      --level-5: {LEVEL_COLORS[5]};
     }}
 
     * {{
@@ -214,80 +216,93 @@ def render_html(daily_miles: dict[date, float]) -> str:
     body {{
       margin: 0;
       min-width: 320px;
-      background:
-        radial-gradient(circle at top left, rgba(155, 233, 168, 0.48), transparent 32rem),
-        linear-gradient(135deg, #f9fbf6 0%, var(--bg) 100%);
-      color: var(--ink);
-      font-family: Avenir Next, Avenir, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
     }}
 
     main {{
-      width: min(1180px, calc(100vw - 32px));
+      width: min(100%, 1180px);
       margin: 0 auto;
-      padding: 42px 0 56px;
+      padding: 28px 18px 48px;
     }}
 
     .hero {{
-      margin-bottom: 28px;
+      margin-bottom: 36px;
     }}
 
     h1 {{
-      margin: 0 0 8px;
-      font-size: clamp(2rem, 5vw, 4.2rem);
-      letter-spacing: -0.06em;
-      line-height: 0.95;
-    }}
-
-    .hero p {{
       margin: 0;
-      color: var(--muted);
-      font-size: 1.05rem;
+      font-size: clamp(3.25rem, 7vw, 5.25rem);
+      font-weight: 800;
+      letter-spacing: -0.055em;
+      line-height: 0.94;
     }}
 
-    .summary {{
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin: 22px 0 0;
-    }}
-
-    .pill {{
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.74);
-      padding: 8px 12px;
-      font-size: 0.94rem;
+    h1 span {{
+      color: var(--accent);
+      font-style: italic;
     }}
 
     .year-card {{
       overflow-x: auto;
-      margin-top: 20px;
-      padding: 22px;
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      background: rgba(255, 255, 255, 0.88);
-      box-shadow: var(--shadow);
+      margin-top: 18px;
+    }}
+
+    .year-card + .year-card {{
+      margin-top: 64px;
     }}
 
     .year-header {{
       display: flex;
       justify-content: space-between;
-      gap: 16px;
-      align-items: start;
+      gap: 28px;
+      align-items: end;
       margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--accent);
     }}
 
     h2 {{
       margin: 0;
-      font-size: 1.55rem;
-      letter-spacing: -0.04em;
+      font-size: 2.25rem;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.035em;
     }}
 
-    .year-header p,
-    .max-day {{
-      margin: 5px 0 0;
+    .year-summary {{
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(84px, auto);
+      gap: 28px;
+      margin: 0;
+    }}
+
+    .year-summary dt {{
+      margin: 0 0 2px;
+      color: var(--label);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.07em;
+      line-height: 1.2;
+      text-transform: uppercase;
+    }}
+
+    .year-summary dd {{
+      margin: 0;
+      color: var(--text);
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      white-space: nowrap;
+    }}
+
+    .year-summary dd span {{
       color: var(--muted);
-      font-size: 0.94rem;
+      font-size: 0.76em;
+      font-weight: 600;
     }}
 
     .grid-wrap {{
@@ -324,8 +339,8 @@ def render_html(daily_miles: dict[date, float]) -> str:
     .day {{
       width: 13px;
       height: 13px;
-      border-radius: 3px;
-      border: 1px solid rgba(23, 35, 18, 0.06);
+      border-radius: 2px;
+      border: 1px solid rgba(238, 244, 239, 0.04);
       background: var(--level-0);
     }}
 
@@ -338,6 +353,7 @@ def render_html(daily_miles: dict[date, float]) -> str:
     .level-2 {{ background: var(--level-2); }}
     .level-3 {{ background: var(--level-3); }}
     .level-4 {{ background: var(--level-4); }}
+    .level-5 {{ background: var(--level-5); }}
 
     .legend {{
       display: flex;
@@ -351,30 +367,34 @@ def render_html(daily_miles: dict[date, float]) -> str:
     .legend-swatch {{
       width: 13px;
       height: 13px;
-      border-radius: 3px;
-      border: 1px solid rgba(23, 35, 18, 0.06);
+      border-radius: 2px;
+      border: 1px solid rgba(238, 244, 239, 0.04);
     }}
 
     .empty-state {{
       padding: 24px;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background: var(--card);
+      border-top: 1px solid var(--accent);
+      color: var(--muted);
     }}
 
     @media (max-width: 720px) {{
       main {{
-        width: min(100vw - 20px, 1180px);
-        padding-top: 28px;
-      }}
-
-      .year-card {{
-        padding: 16px;
-        border-radius: 18px;
+        padding: 22px 12px 36px;
       }}
 
       .year-header {{
         display: block;
+      }}
+
+      .year-summary {{
+        grid-auto-flow: row;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }}
+
+      h1 {{
+        font-size: 3rem;
       }}
     }}
   </style>
@@ -382,24 +402,19 @@ def render_html(daily_miles: dict[date, float]) -> str:
 <body>
   <main>
     <header class="hero">
-      <h1>Running Distance Grid</h1>
-      <p>Daily running mileage from the local Strava archive. Brighter greens mean more miles that day.</p>
-      <div class="summary">
-        <span class="pill">{len(years)} years</span>
-        <span class="pill">{total_miles:.1f} total miles</span>
-        <span class="pill">{total_run_days} run days</span>
+      <h1>Running <span>Grid</span></h1>
+      <div class="legend" aria-hidden="true">
+        <span>Less</span>
+        <span class="legend-swatch level-0"></span>
+        <span class="legend-swatch level-1"></span>
+        <span class="legend-swatch level-2"></span>
+        <span class="legend-swatch level-3"></span>
+        <span class="legend-swatch level-4"></span>
+        <span class="legend-swatch level-5"></span>
+        <span>More</span>
       </div>
     </header>
     {body}
-    <div class="legend" aria-hidden="true">
-      <span>Less</span>
-      <span class="legend-swatch level-0"></span>
-      <span class="legend-swatch level-1"></span>
-      <span class="legend-swatch level-2"></span>
-      <span class="legend-swatch level-3"></span>
-      <span class="legend-swatch level-4"></span>
-      <span>More</span>
-    </div>
   </main>
 </body>
 </html>

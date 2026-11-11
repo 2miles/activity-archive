@@ -12,7 +12,7 @@ const FEATURED_PATHS = [
 const FEATURED_LABELS = {
   'reports/runs_log.html': 'Running Log',
   'reports/running_volume.html': 'Running Graph',
-  'heatmaps/running_distance_grid.html': 'Calendar Heatmap',
+  'heatmaps/running_distance_grid.html': 'Running Grid',
   'heatmaps/all_routes_pink_purple.html': 'Route Heatmap',
   'heatmaps/all_routes_original.html': 'All Routes Map',
 };
@@ -129,11 +129,12 @@ const ActivityLogPreview = () => {
 
 const CalendarPreview = () => {
   const fills = [
-    '#e9f7ec',
-    '#d6f0dc',
-    '#b9e7c5',
-    '#83d79a',
-    '#4fb96c',
+    '#1c2720',
+    '#08713a',
+    '#15964a',
+    '#55d45f',
+    '#bde64b',
+    '#f2dc3f',
   ];
 
   return (
